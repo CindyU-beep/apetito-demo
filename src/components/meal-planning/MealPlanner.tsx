@@ -333,6 +333,27 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
         </CardHeader>
       </Card>
 
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-medium">Ready to order your meal plan?</p>
+              <p className="text-sm text-muted-foreground">
+                Add all meals from this plan to your cart
+              </p>
+            </div>
+            <Button 
+              onClick={placeOrder}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Place Order
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs value={view} onValueChange={(v) => setView(v as 'calendar' | 'list' | 'ai')}>
         <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
           <TabsTrigger value="calendar" className="flex items-center gap-2">
@@ -377,27 +398,6 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
           <ShoppingListView plan={activePlan} onAddToCart={onAddToCart} />
         </TabsContent>
       </Tabs>
-
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <p className="text-sm font-medium">Ready to order your meal plan?</p>
-              <p className="text-sm text-muted-foreground">
-                Add all meals from this plan to your cart
-              </p>
-            </div>
-            <Button 
-              onClick={placeOrder}
-              size="lg"
-              className="flex items-center gap-2"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              Place Order
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       <CreateMealDialog
         open={isCreateMealOpen}
