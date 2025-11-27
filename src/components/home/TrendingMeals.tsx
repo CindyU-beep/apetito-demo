@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState, useRef } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendUp, Fire } from '@phosphor-icons/react';
+import { Button } from '@/components/ui/button';
+import { Fire, Star, Heart, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { CartItem, Meal, OrganizationProfile } from '@/lib/types';
 import { MOCK_MEALS, MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
-import { SimpleMealCard } from './SimpleMealCard';
 import { toast } from 'sonner';
 import { useKV } from '@github/spark/hooks';
 import { checkAllergenViolation } from '@/lib/allergenCheck';
@@ -27,6 +27,7 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
   const [profile] = useKV<OrganizationProfile>('organization-profile', MOCK_ORGANIZATION_PROFILE);
   const [pendingMeal, setPendingMeal] = useState<Meal | null>(null);
   const [allergenWarning, setAllergenWarning] = useState<string>('');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleAddMeal = (meal: Meal) => {
     const product = {
@@ -88,9 +89,37 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
     setAllergenWarning('');
   };
 
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   const trendingMeals = MOCK_MEALS
     .filter(m => m.category === 'Vegetarian' || m.category === 'Main')
-    .slice(0, 6);
+    .slice(0, 8);
+
+  const getMealRating = (index: number) => {
+    const ratings = [4.4, 4.6, 4.2, 4.5, 4.3, 4.7, 4.4, 4.5];
+    return ratings[index] || 4.4;
+  };
+
+  const getMealReviews = (index: number) => {
+    const reviews = [844, 311, 234, 567, 423, 678, 392, 501];
+    return reviews[index] || 300;
+  };
+
+  const hasDiscount = (index: number) => {
+    return index % 3 === 0;
+  };
+
+  const getOriginalPrice = (price: number) => {
+    return price * 1.2;
+  };
 
   return (
     <>
@@ -101,28 +130,107 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
               <Fire className="w-6 h-6 text-destructive" weight="fill" />
               Trending This Week
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Most popular meals among institutional buyers
-            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="text-sm font-medium text-primary hover:underline">
+              View all
+            </button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => scroll('left')}
+              >
+                <CaretLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => scroll('right')}
+              >
+                <CaretRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {trendingMeals.map((meal, index) => (
-            <div key={meal.id} className="relative">
-              {index < 3 && (
-                <Badge 
-                  className="absolute top-4 left-4 z-10 bg-destructive text-destructive-foreground shadow-md gap-1"
-                >
-                  <TrendUp className="w-3 h-3" weight="bold" />
-                  #{index + 1} Trending
-                </Badge>
-              )}
-              <SimpleMealCard
-                meal={meal}
-                onAddToCart={handleAddMeal}
-              />
-            </div>
+            <Card key={meal.id} className="flex-none w-[280px] overflow-hidden border-border hover:shadow-lg transition-shadow">
+              <div className="relative h-44 bg-card">
+                <img
+                  src={meal.imageUrl}
+                  alt={meal.name}
+                  className="w-full h-full object-cover"
+                />
+                {index < 3 && meal.dietaryTags.length > 0 && (
+                  <div className="absolute top-2 left-2">
+                    <div className="bg-white rounded-full w-12 h-12 flex items-center justify-center border-4 border-success shadow-md">
+                      <span className="text-success font-bold text-xs leading-tight text-center">
+                        {meal.dietaryTags[0] === 'Vegetarian' ? '🌱' : 'Top'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <CardContent className="p-4 space-y-3">
+                {hasDiscount(index) && (
+                  <Badge className="bg-warning text-warning-foreground text-xs font-semibold">
+                    SAVE €{(getOriginalPrice(meal.price) - meal.price).toFixed(2)}
+                  </Badge>
+                )}
+                
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-foreground">
+                      €{meal.price.toFixed(2)}
+                    </span>
+                    {hasDiscount(index) && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        €{getOriginalPrice(meal.price).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    €{(meal.price / 1).toFixed(2)} / {meal.servingSize}
+                  </p>
+                </div>
+
+                <h3 className="font-medium text-sm line-clamp-2 min-h-[40px] text-foreground">
+                  {meal.name}
+                </h3>
+
+                <div className="flex items-center gap-1 text-xs">
+                  <Star className="w-4 h-4 text-warning fill-warning" weight="fill" />
+                  <span className="font-semibold text-foreground">{getMealRating(index)}</span>
+                  <span className="text-muted-foreground">/ {getMealReviews(index)}</span>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <Button
+                    onClick={() => handleAddMeal(meal)}
+                    className="w-full bg-success hover:bg-success/90 text-success-foreground font-semibold"
+                    size="sm"
+                  >
+                    Add to cart
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full font-semibold"
+                    size="sm"
+                  >
+                    Save to list
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
