@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from '@phosphor-icons/react';
 import { Meal } from '@/lib/types';
 import { ALLERGEN_LABELS } from '@/lib/mockData';
+import { SustainabilityBadges } from './SustainabilityBadges';
 
 type MealCardProps = {
   meal: Meal;
@@ -49,6 +50,16 @@ export function MealCard({ meal, onAddToPlan }: MealCardProps) {
             </p>
           ))}
         </div>
+
+        {(meal.sustainability || meal.foodSafety) && (
+          <div>
+            <SustainabilityBadges 
+              sustainability={meal.sustainability}
+              foodSafety={meal.foodSafety}
+              compact={false}
+            />
+          </div>
+        )}
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
           <span>{meal.nutritionalInfo.calories} kcal</span>

@@ -8,6 +8,38 @@ export type AllergenType =
   | 'shellfish'
   | 'sesame';
 
+export type FoodSafetyCertification = 
+  | 'IFS'
+  | 'BRC'
+  | 'ISO22000'
+  | 'HACCP'
+  | 'EUOrganic'
+  | 'Halal'
+  | 'Kosher';
+
+export type SustainabilityData = {
+  co2Footprint?: number;
+  regionalSourcing?: boolean;
+  organicCertified?: boolean;
+  sustainabilityScore?: number;
+  packaging?: {
+    type: string;
+    recyclable: boolean;
+    recycledContent?: number;
+  };
+  transportDistance?: number;
+  seasonalProduct?: boolean;
+};
+
+export type FoodSafetyInfo = {
+  certifications: FoodSafetyCertification[];
+  traceabilityCode?: string;
+  productionDate?: string;
+  bestBefore?: string;
+  storageConditions?: string;
+  euNutritionLabel?: boolean;
+};
+
 export type Product = {
   id: string;
   sku: string;
@@ -25,8 +57,14 @@ export type Product = {
     protein: number;
     carbs: number;
     fat: number;
+    fiber?: number;
+    sugar?: number;
+    salt?: number;
+    saturatedFat?: number;
   };
   inStock: boolean;
+  sustainability?: SustainabilityData;
+  foodSafety?: FoodSafetyInfo;
 };
 
 export type CartItem = {
@@ -107,10 +145,16 @@ export type Meal = {
     protein: number;
     carbs: number;
     fat: number;
+    fiber?: number;
+    sugar?: number;
+    salt?: number;
+    saturatedFat?: number;
   };
   dietaryTags: string[];
   price: number;
   servingSize: string;
+  sustainability?: SustainabilityData;
+  foodSafety?: FoodSafetyInfo;
 };
 
 export type PlannedMeal = {

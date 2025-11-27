@@ -221,6 +221,45 @@ Keep it professional but emphasize the safety risk.`;
         });
       }
 
+      const sustainabilityMetrics = plan.days.reduce(
+        (acc, day) => {
+          day.meals.forEach(plannedMeal => {
+            if (plannedMeal.meal.sustainability) {
+              const s = plannedMeal.meal.sustainability;
+              if (s.co2Footprint) acc.totalCO2 += s.co2Footprint * plannedMeal.servings;
+              if (s.regionalSourcing) acc.regionalCount++;
+              if (s.organicCertified) acc.organicCount++;
+              if (s.seasonalProduct) acc.seasonalCount++;
+              if (s.sustainabilityScore) {
+                acc.totalSustainabilityScore += s.sustainabilityScore;
+                acc.sustainabilityCount++;
+              }
+            }
+          });
+          return acc;
+        },
+        { totalCO2: 0, regionalCount: 0, organicCount: 0, seasonalCount: 0, totalSustainabilityScore: 0, sustainabilityCount: 0 }
+      );
+
+      const totalMeals = plan.days.reduce((sum, day) => sum + day.meals.length, 0);
+      const avgSustainabilityScore = sustainabilityMetrics.sustainabilityCount > 0 
+        ? sustainabilityMetrics.totalSustainabilityScore / sustainabilityMetrics.sustainabilityCount 
+        : 0;
+
+      if (avgSustainabilityScore > 0 && avgSustainabilityScore >= 80) {
+        newSuggestions.push({
+          type: 'success',
+          title: '🌱 Excellent Sustainability',
+          description: `Average sustainability score: ${avgSustainabilityScore.toFixed(0)}/100. Your plan includes ${sustainabilityMetrics.regionalCount} regional, ${sustainabilityMetrics.organicCount} organic, and ${sustainabilityMetrics.seasonalCount} seasonal meals. Total CO₂ footprint: ${sustainabilityMetrics.totalCO2.toFixed(2)}kg.`,
+        });
+      } else if (avgSustainabilityScore > 0 && avgSustainabilityScore < 70) {
+        newSuggestions.push({
+          type: 'info',
+          title: '🌍 Sustainability Improvement',
+          description: `Average sustainability score: ${avgSustainabilityScore.toFixed(0)}/100. Consider adding more regional, organic, or seasonal options to reduce environmental impact. Current CO₂: ${sustainabilityMetrics.totalCO2.toFixed(2)}kg.`,
+        });
+      }
+
       if (newSuggestions.length === 0) {
         newSuggestions.push({
           type: 'success',

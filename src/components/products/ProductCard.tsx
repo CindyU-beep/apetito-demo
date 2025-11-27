@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Package } from '@phosphor-icons/react';
 import { Product } from '@/lib/types';
 import { ALLERGEN_LABELS } from '@/lib/mockData';
+import { SustainabilityBadges } from './SustainabilityBadges';
 import { useState } from 'react';
 
 type ProductCardProps = {
@@ -45,6 +46,16 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </div>
           <p className="text-xs text-muted-foreground line-clamp-2">{product.description}</p>
         </div>
+
+        {(product.sustainability || product.foodSafety) && (
+          <div>
+            <SustainabilityBadges 
+              sustainability={product.sustainability}
+              foodSafety={product.foodSafety}
+              compact={true}
+            />
+          </div>
+        )}
 
         {product.allergens.length > 0 && (
           <div className="flex flex-wrap gap-1">

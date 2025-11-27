@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Meal } from '@/lib/types';
 import { ALLERGEN_LABELS } from '@/lib/mockData';
+import { SustainabilityBadges } from '@/components/products/SustainabilityBadges';
 
 type MealCardProps = {
   meal: Meal;
@@ -30,6 +31,16 @@ export function MealCard({ meal }: MealCardProps) {
               </Badge>
             ))}
           </div>
+
+          {(meal.sustainability || meal.foodSafety) && (
+            <div className="mb-2">
+              <SustainabilityBadges 
+                sustainability={meal.sustainability}
+                foodSafety={meal.foodSafety}
+                compact={true}
+              />
+            </div>
+          )}
 
           {meal.allergens.length > 0 && (
             <div className="flex flex-wrap gap-1">
