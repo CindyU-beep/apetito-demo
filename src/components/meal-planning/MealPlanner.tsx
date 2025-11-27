@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, ListChecks } from '@phosphor-icons/react';
+import { Plus, Calendar, ListChecks, Sparkle } from '@phosphor-icons/react';
 import { MealPlan, CartItem, PlannedMeal } from '@/lib/types';
 import { WeeklyCalendar } from './WeeklyCalendar';
 import { CreateMealDialog } from './CreateMealDialog';
 import { MealPlansList } from './MealPlansList';
 import { ShoppingListView } from './ShoppingListView';
+import { MealPlanningAI } from './MealPlanningAI';
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -22,7 +23,7 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCreateMealOpen, setIsCreateMealOpen] = useState(false);
   const [editingMeal, setEditingMeal] = useState<PlannedMeal | null>(null);
-  const [view, setView] = useState<'calendar' | 'list'>('calendar');
+  const [view, setView] = useState<'calendar' | 'list' | 'ai'>('calendar');
 
   const activePlan = mealPlans?.find((plan) => plan.id === activePlanId);
 
@@ -111,6 +112,31 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
     toast.success('Meal plan deleted');
   };
 
+  const applyAISuggestions = (suggestions: { date: string; meals: PlannedMeal[] }[]) => {
+    if (!activePlan) return;
+
+    setMealPlans((current = []) =>
+      current.map((plan) => {
+        if (plan.id === activePlan.id) {
+          return {
+            ...plan,
+            days: plan.days.map((day) => {
+              const suggestion = suggestions.find(s => s.date === day.date);
+              if (suggestion) {
+                return {
+                  ...day,
+                  meals: suggestion.meals,
+                };
+              }
+              return day;
+            }),
+          };
+        }
+        return plan;
+      })
+    );
+  };
+
   if (!activePlan) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -187,15 +213,19 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
         </CardHeader>
       </Card>
 
-      <Tabs value={view} onValueChange={(v) => setView(v as 'calendar' | 'list')}>
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+      <Tabs value={view} onValueChange={(v) => setView(v as 'calendar' | 'list' | 'ai')}>
+        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            Calendar View
+            <span className="hidden sm:inline">Calendar</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-2">
+            <Sparkle className="w-4 h-4" weight="fill" />
+            <span className="hidden sm:inline">AI Assistant</span>
           </TabsTrigger>
           <TabsTrigger value="list" className="flex items-center gap-2">
             <ListChecks className="w-4 h-4" />
-            Shopping List
+            <span className="hidden sm:inline">Shopping List</span>
           </TabsTrigger>
         </TabsList>
 
@@ -213,6 +243,13 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
               setIsCreateMealOpen(true);
             }}
             onRemoveMeal={removeMealFromPlan}
+          />
+        </TabsContent>
+
+        <TabsContent value="ai" className="mt-6">
+          <MealPlanningAI 
+            plan={activePlan}
+            onApplySuggestions={applyAISuggestions}
           />
         </TabsContent>
 

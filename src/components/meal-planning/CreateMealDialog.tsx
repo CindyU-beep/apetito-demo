@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlannedMeal, Meal } from '@/lib/types';
 import { format } from 'date-fns';
-import { MagnifyingGlass, Check } from '@phosphor-icons/react';
+import { MagnifyingGlass, Check, Sparkle, Lightning } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { MOCK_MEALS } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,9 @@ export function CreateMealDialog({
     editingMeal?.servings.toString() || '1'
   );
   const [search, setSearch] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<Meal[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [viewMode, setViewMode] = useState<'browse' | 'ai'>('browse');
 
   const filteredMeals = MOCK_MEALS.filter(
     (meal) =>
@@ -48,6 +52,67 @@ export function CreateMealDialog({
       meal.category.toLowerCase().includes(search.toLowerCase()) ||
       meal.components.some((c) => c.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const getAISuggestions = async () => {
+    setIsLoadingSuggestions(true);
+    setViewMode('ai');
+    
+    try {
+      const dayOfWeek = format(selectedDate, 'EEEE');
+      const mealsData = JSON.stringify(MOCK_MEALS.map(m => ({
+        id: m.id,
+        name: m.name,
+        category: m.category,
+        calories: m.nutritionalInfo.calories,
+        protein: m.nutritionalInfo.protein,
+        price: m.price,
+        dietaryTags: m.dietaryTags
+      })));
+
+      const promptText = `You are a nutritionist AI. Suggest 3-5 best meals for ${dayOfWeek}.
+
+Available meals:
+${mealsData}
+
+Consider:
+- Day of week (${dayOfWeek}) - lighter meals mid-week, heartier on weekends
+- Nutritional balance (aim for 500-700 kcal, 25-35g protein per meal)
+- Variety in categories
+- Popular combinations
+
+Return ONLY a JSON object:
+{
+  "suggestions": [
+    {
+      "mealId": "meal_id",
+      "reason": "Brief reason why this is good for ${dayOfWeek}"
+    }
+  ]
+}`;
+
+      const response = await window.spark.llm(promptText, 'gpt-4o', true);
+      const result = JSON.parse(response);
+      
+      const suggestedMeals = result.suggestions
+        .map((s: { mealId: string; reason: string }) => {
+          const meal = MOCK_MEALS.find(m => m.id === s.mealId);
+          return meal ? { ...meal, aiReason: s.reason } : null;
+        })
+        .filter(Boolean) as (Meal & { aiReason: string })[];
+
+      setAiSuggestions(suggestedMeals);
+      
+      if (suggestedMeals.length === 0) {
+        toast.info('No AI suggestions available, browse all meals');
+      }
+    } catch (error) {
+      console.error('Error getting AI suggestions:', error);
+      toast.error('Failed to get AI suggestions');
+      setViewMode('browse');
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!selectedMeal) {
@@ -70,7 +135,59 @@ export function CreateMealDialog({
     setSelectedMeal(null);
     setServings('1');
     setSearch('');
+    setAiSuggestions([]);
+    setViewMode('browse');
   };
+
+  const renderMealCard = (meal: Meal & { aiReason?: string }) => (
+    <div
+      key={meal.id}
+      onClick={() => setSelectedMeal(meal)}
+      className={cn(
+        'relative p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md',
+        selectedMeal?.id === meal.id
+          ? 'border-primary bg-primary/5'
+          : 'border-border hover:border-primary/50'
+      )}
+    >
+      {selectedMeal?.id === meal.id && (
+        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+          <Check className="w-4 h-4" />
+        </div>
+      )}
+      <div className="flex gap-3">
+        <img
+          src={meal.imageUrl}
+          alt={meal.name}
+          className="w-24 h-24 object-cover rounded"
+        />
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-sm mb-1 line-clamp-2">
+            {meal.name}
+          </h4>
+          <p className="text-xs text-muted-foreground mb-2">
+            {meal.category} • €{meal.price.toFixed(2)}
+          </p>
+          {meal.aiReason && (
+            <p className="text-xs text-primary bg-primary/10 px-2 py-1 rounded mb-2 line-clamp-2">
+              <Sparkle className="w-3 h-3 inline mr-1" weight="fill" />
+              {meal.aiReason}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-1">
+            {meal.dietaryTags.slice(0, 2).map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {meal.nutritionalInfo.calories} kcal • {meal.nutritionalInfo.protein}g protein
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <Dialog
@@ -86,68 +203,81 @@ export function CreateMealDialog({
             {editingMeal ? 'Edit Meal' : 'Add Meal'} - {format(selectedDate, 'EEEE, MMM d')}
           </DialogTitle>
           <DialogDescription>
-            Select a meal from the catalog and specify servings
+            Get AI suggestions or browse all meals from the catalog
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 space-y-4 overflow-hidden">
-          <div className="relative">
-            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search meals..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'ai' ? 'default' : 'outline'}
+              size="sm"
+              onClick={getAISuggestions}
+              disabled={isLoadingSuggestions}
+              className="flex-1"
+            >
+              {isLoadingSuggestions ? (
+                <>
+                  <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Lightning className="w-4 h-4 mr-2" weight="fill" />
+                  AI Suggestions
+                </>
+              )}
+            </Button>
+            <Button
+              variant={viewMode === 'browse' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('browse')}
+              className="flex-1"
+            >
+              <MagnifyingGlass className="w-4 h-4 mr-2" />
+              Browse All
+            </Button>
           </div>
 
-          <ScrollArea className="h-[400px] pr-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {filteredMeals.map((meal) => (
-                <div
-                  key={meal.id}
-                  onClick={() => setSelectedMeal(meal)}
-                  className={cn(
-                    'relative p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md',
-                    selectedMeal?.id === meal.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  )}
-                >
-                  {selectedMeal?.id === meal.id && (
-                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                      <Check className="w-4 h-4" />
-                    </div>
-                  )}
-                  <div className="flex gap-3">
-                    <img
-                      src={meal.imageUrl}
-                      alt={meal.name}
-                      className="w-24 h-24 object-cover rounded"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-sm mb-1 line-clamp-2">
-                        {meal.name}
-                      </h4>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        {meal.category} • €{meal.price.toFixed(2)}
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {meal.dietaryTags.slice(0, 2).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {meal.nutritionalInfo.calories} kcal
-                      </p>
-                    </div>
+          {viewMode === 'browse' && (
+            <>
+              <div className="relative">
+                <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search meals..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {filteredMeals.map(renderMealCard)}
+                </div>
+              </ScrollArea>
+            </>
+          )}
+
+          {viewMode === 'ai' && !isLoadingSuggestions && (
+            <ScrollArea className="h-[400px] pr-4">
+              {aiSuggestions.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                    <Sparkle className="w-4 h-4 text-primary" weight="fill" />
+                    <span>AI recommended meals for {format(selectedDate, 'EEEE')}</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {aiSuggestions.map(renderMealCard)}
                   </div>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">No suggestions available</p>
+                </div>
+              )}
+            </ScrollArea>
+          )}
 
           {selectedMeal && (
             <div className="space-y-2 pt-2 border-t">

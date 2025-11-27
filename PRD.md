@@ -48,11 +48,11 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Success criteria**: Clear display of volume discounts; delivery scheduling reduces repeat ordering time by 50%
 
 ### Meal Planning & Menu Management
-- **Functionality**: Weekly meal planning interface with horizontal day layout showing meal cards, meal catalog browsing for complete dishes from Apetito menu, and automatic shopping list generation with cost estimation
-- **Purpose**: Enable institutional buyers to plan weekly menus in advance by selecting complete meals from Apetito's catalog, visualize nutritional totals across days, and track estimated costs
-- **Trigger**: User navigates to "Plan" tab; clicks "Create New Meal Plan" or selects existing plan; browses meals in "Meals" tab
-- **Progression**: User creates weekly plan → Browses Apetito meal catalog (Vegetarian, Main, Sides, Desserts, etc.) → Selects meals and adds to specific days with serving quantities → System shows meals organized by day with color-coded headers → Shopping list view shows consolidated meal summary with total servings and cost estimates → User can track which meals have been ordered
-- **Success criteria**: Meal plans persist across sessions; meals display with images and components; weekly view clearly shows all days with color-coded organization; cost estimation accurate per serving; shopping list provides clear meal consolidation
+- **Functionality**: Weekly meal planning interface with horizontal day layout showing meal cards, meal catalog browsing for complete dishes from Apetito menu, AI-powered meal suggestions and auto-generation, nutritional analysis and balance optimization, smart recommendations based on day-of-week and dietary patterns, and automatic shopping list generation with cost estimation
+- **Purpose**: Enable institutional buyers to plan weekly menus in advance by selecting complete meals from Apetito's catalog, leverage AI to optimize nutritional balance and variety, receive intelligent meal suggestions tailored to specific days, visualize nutritional totals across days, and track estimated costs
+- **Trigger**: User navigates to "Plan" tab; clicks "Create New Meal Plan" or selects existing plan; browses meals in "Meals" tab; accesses "AI Assistant" tab for intelligent suggestions; clicks "Auto-Fill Week" for AI-generated complete weekly plans
+- **Progression**: User creates weekly plan → Can choose to auto-fill with AI or manually select → AI Assistant analyzes current plan and provides insights (calorie balance, protein levels, variety score, cost optimization) → User can request AI suggestions for specific days considering day-of-week patterns → Browses Apetito meal catalog with optional AI-recommended meals highlighted → Selects meals with AI-provided reasons why they're suitable → System shows meals organized by day with color-coded headers → AI provides warnings (low calories, limited variety) and actionable suggestions → Shopping list view shows consolidated meal summary with total servings and cost estimates → User can track which meals have been ordered
+- **Success criteria**: Meal plans persist across sessions; AI suggestions achieve 80%+ user acceptance rate; auto-fill generates nutritionally balanced plans (2000-2200 kcal/day average); AI analysis provides actionable insights within 2 seconds; meals display with images, components, and AI reasoning; weekly view clearly shows all days with color-coded organization; cost estimation accurate per serving; shopping list provides clear meal consolidation; AI identifies nutritional gaps and suggests improvements
 
 ## Edge Case Handling
 
@@ -62,9 +62,13 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Recipe Parsing Failures**: Graceful fallback to manual ingredient entry with AI-assisted autocomplete
 - **Complex Dietary Restrictions**: Multi-filter support (vegan + gluten-free + nut-free) with clear "no matches" messaging
 - **Unmatched Ingredients**: Shopping list now shows meal summaries with cost per serving instead of raw ingredients
-- **Empty Meal Plans**: Guide users to create first plan with clear benefits and example use cases
+- **Empty Meal Plans**: Guide users to create first plan with clear benefits and example use cases; AI offers to auto-fill week
 - **Overlapping Meal Plans**: Allow multiple plans but clearly indicate which is "active" for shopping list generation
-- **Meal Selection**: Browsing 20+ prepared meals from Apetito catalog with search, category filters, and allergen exclusions
+- **Meal Selection**: Browsing 20+ prepared meals from Apetito catalog with search, category filters, allergen exclusions, and AI-powered suggestions
+- **AI Generation Failures**: Graceful fallback to manual selection with cached suggestions; retry option with timeout handling
+- **Poor Nutritional Balance**: AI proactively identifies issues (low protein, high calories, limited variety) and suggests specific meal swaps
+- **Budget Constraints**: AI considers price when generating suggestions and auto-fill plans; offers budget optimization recommendations
+- **Day-Specific Preferences**: AI learns patterns (e.g., lighter meals mid-week) and adapts suggestions accordingly
 - **Large Orders**: Performance optimization with progressive loading and cart summarization
 - **Offline Mode**: Queue actions locally with sync indicators and retry logic
 
