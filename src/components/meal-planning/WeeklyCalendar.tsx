@@ -43,6 +43,7 @@ export function WeeklyCalendar({
 }: WeeklyCalendarProps) {
   const [profile] = useKV<OrganizationProfile | null>('organization-profile', null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzingDayIndex, setAnalyzingDayIndex] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [nutritionalBalance, setNutritionalBalance] = useState<NutritionalBalance | null>(null);
 
@@ -65,6 +66,8 @@ export function WeeklyCalendar({
 
   const analyzeMealPlan = async () => {
     setIsAnalyzing(true);
+    setSuggestions([]);
+    setNutritionalBalance(null);
     
     try {
       const totalDays = plan.days.filter(day => day.meals.length > 0).length;
@@ -74,6 +77,15 @@ export function WeeklyCalendar({
         setIsAnalyzing(false);
         return;
       }
+
+      for (let i = 0; i < plan.days.length; i++) {
+        if (plan.days[i].meals.length > 0) {
+          setAnalyzingDayIndex(i);
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      }
+      
+      setAnalyzingDayIndex(null);
 
       const totals = plan.days.reduce(
         (acc, day) => {
@@ -246,8 +258,9 @@ Keep it professional but emphasize the safety risk.`;
                   <div
                     key={day.date}
                     className={cn(
-                      'flex-1 min-w-[180px] border-r-2 border-success/30',
-                      isLastDay && 'border-r-0'
+                      'flex-1 min-w-[180px] border-r-2 border-success/30 transition-all duration-300',
+                      isLastDay && 'border-r-0',
+                      analyzingDayIndex === dayIndex && 'ring-4 ring-primary/50 ring-inset animate-pulse bg-primary/5'
                     )}
                   >
                     <div className="border-b-2 border-success/30 px-3 py-2 bg-muted/30">
@@ -287,12 +300,16 @@ Keep it professional but emphasize the safety risk.`;
                               <div
                                 key={plannedMeal.id}
                                 className={cn(
-                                  "px-3 py-3 border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer group",
-                                  hasRestrictedAllergens && "bg-destructive/10 border-l-4 border-l-destructive"
+                                  "px-3 py-3 border-b border-border/50 hover:bg-accent/30 transition-all cursor-pointer group relative overflow-hidden",
+                                  hasRestrictedAllergens && "bg-destructive/10 border-l-4 border-l-destructive",
+                                  analyzingDayIndex === dayIndex && "animate-pulse"
                                 )}
                                 onClick={() => onEditMeal(plannedMeal, day.date)}
                               >
-                                <div className="space-y-1.5">
+                                {analyzingDayIndex === dayIndex && (
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-slide-right pointer-events-none" />
+                                )}
+                                <div className="space-y-1.5 relative z-10">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-start gap-1.5 flex-1 min-w-0">
                                       {hasRestrictedAllergens && (

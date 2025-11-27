@@ -101,6 +101,15 @@
   }
 }
 
+@keyframes slide-right {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 .animate-typing-pulse {
   animation: typing-pulse 1.4s ease-in-out infinite;
 }
@@ -111,4 +120,8 @@
 
 .animate-pulse-warning {
   animation: pulse-warning 1.5s ease-in-out 3;
+}
+
+.animate-slide-right {
+  animation: slide-right 1s ease-in-out infinite;
 }
