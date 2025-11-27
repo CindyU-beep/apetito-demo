@@ -302,38 +302,38 @@ export function CartPanel({
 
               <TabsContent value="analysis" className="flex-1 flex flex-col mt-0 min-h-0">
                 <ScrollArea className="flex-1 min-h-0">
-                  <div className="space-y-6 pb-4 px-6">
-                    <Card className="p-5 bg-gradient-to-br from-primary/5 to-accent/5">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Sparkle className="w-6 h-6 text-primary" weight="fill" />
-                        <h3 className="font-semibold text-lg">AI-Powered Analysis</h3>
+                  <div className="space-y-4 pb-4 px-6">
+                    <Card className="p-3 bg-gradient-to-br from-primary/5 to-accent/5">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Sparkle className="w-4 h-4 text-primary" weight="fill" />
+                        <h3 className="font-semibold text-sm">AI-Powered Analysis</h3>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {profile?.name ? `Tailored for ${profile.name}` : 'Institutional nutrition analysis'}
                       </p>
                     </Card>
 
                     <div>
-                      <h4 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                        <ForkKnife className="w-5 h-5" />
+                      <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                        <ForkKnife className="w-4 h-4" />
                         Nutritional Summary
                       </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Card className="p-4">
-                          <p className="text-xs text-muted-foreground mb-2">Total Calories</p>
-                          <p className="text-2xl font-bold">{totalNutrition.calories.toFixed(0)}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Card className="p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Total Calories</p>
+                          <p className="text-xl font-bold">{totalNutrition.calories.toFixed(0)}</p>
                         </Card>
-                        <Card className="p-4">
-                          <p className="text-xs text-muted-foreground mb-2">Protein</p>
-                          <p className="text-2xl font-bold">{totalNutrition.protein.toFixed(0)}g</p>
+                        <Card className="p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Protein</p>
+                          <p className="text-xl font-bold">{totalNutrition.protein.toFixed(0)}g</p>
                         </Card>
-                        <Card className="p-4">
-                          <p className="text-xs text-muted-foreground mb-2">Carbs</p>
-                          <p className="text-2xl font-bold">{totalNutrition.carbs.toFixed(0)}g</p>
+                        <Card className="p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Carbs</p>
+                          <p className="text-xl font-bold">{totalNutrition.carbs.toFixed(0)}g</p>
                         </Card>
-                        <Card className="p-4">
-                          <p className="text-xs text-muted-foreground mb-2">Fat</p>
-                          <p className="text-2xl font-bold">{totalNutrition.fat.toFixed(0)}g</p>
+                        <Card className="p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Fat</p>
+                          <p className="text-xl font-bold">{totalNutrition.fat.toFixed(0)}g</p>
                         </Card>
                       </div>
                     </div>
@@ -341,22 +341,22 @@ export function CartPanel({
                     {analysis && (
                       <>
                         <div>
-                          <h4 className="font-semibold mb-4 text-base">Insights</h4>
-                          <div className="space-y-3">
+                          <h4 className="font-semibold mb-2.5 text-sm">Insights</h4>
+                          <div className="space-y-2">
                             {analysis.insights.map((insight, index) => (
-                              <Card key={index} className="p-4">
-                                <p className="text-sm leading-relaxed">{insight}</p>
+                              <Card key={index} className="p-3">
+                                <p className="text-xs leading-relaxed">{insight}</p>
                               </Card>
                             ))}
                           </div>
                         </div>
 
                         <div>
-                          <h4 className="font-semibold mb-4 text-base">Recommendations</h4>
-                          <div className="space-y-3">
+                          <h4 className="font-semibold mb-2.5 text-sm">Recommendations</h4>
+                          <div className="space-y-2">
                             {analysis.recommendations.map((rec, index) => (
-                              <Card key={index} className="p-4 bg-accent/5">
-                                <p className="text-sm leading-relaxed">{rec}</p>
+                              <Card key={index} className="p-3 bg-accent/5">
+                                <p className="text-xs leading-relaxed">{rec}</p>
                               </Card>
                             ))}
                           </div>
