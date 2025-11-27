@@ -2,11 +2,23 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Snowflake, Sun, Leaf, CloudRain, Sparkle } from '@phosphor-icons/react';
-import { CartItem, Meal } from '@/lib/types';
-import { MOCK_MEALS } from '@/lib/mockData';
+import { Snowflake, Sun, Leaf, CloudRain, Sparkle, Warning } from '@phosphor-icons/react';
+import { CartItem, Meal, OrganizationProfile } from '@/lib/types';
+import { MOCK_MEALS, MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
 import { SimpleMealCard } from './SimpleMealCard';
 import { toast } from 'sonner';
+import { useKV } from '@github/spark/hooks';
+import { checkAllergenViolation } from '@/lib/allergenCheck';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type SeasonalMenuProps = {
   onAddToCart: (item: CartItem) => void;
@@ -65,6 +77,10 @@ const SPECIAL_MENUS = {
 };
 
 export function SeasonalMenu({ onAddToCart }: SeasonalMenuProps) {
+  const [profile] = useKV<OrganizationProfile>('organization-profile', MOCK_ORGANIZATION_PROFILE);
+  const [pendingMeal, setPendingMeal] = useState<Meal | null>(null);
+  const [allergenWarning, setAllergenWarning] = useState<string>('');
+  
   const currentMonth = new Date().getMonth();
   const currentSeason: Season = 
     currentMonth >= 11 || currentMonth <= 1 ? 'winter' :
@@ -75,23 +91,63 @@ export function SeasonalMenu({ onAddToCart }: SeasonalMenuProps) {
   const [showChristmas, setShowChristmas] = useState(currentMonth === 11 || currentMonth === 0);
 
   const handleAddMeal = (meal: Meal) => {
+    const product = {
+      id: meal.id,
+      sku: `MEAL-${meal.id}`,
+      name: meal.name,
+      description: meal.description,
+      category: meal.category,
+      price: meal.price,
+      unit: 'serving',
+      imageUrl: meal.imageUrl,
+      allergens: meal.allergens,
+      nutritionalInfo: meal.nutritionalInfo,
+      inStock: true,
+    };
+
+    const allergenCheck = checkAllergenViolation(product, profile || null);
+
+    if (allergenCheck.hasViolation) {
+      setPendingMeal(meal);
+      setAllergenWarning(allergenCheck.warningMessage);
+      toast.error(`⚠️ Allergen Warning: ${meal.name} contains ${allergenCheck.violatedAllergens.join(', ')}`);
+      return;
+    }
+
+    onAddToCart({
+      product,
+      quantity: 1,
+    });
+    toast.success(`Added ${meal.name} to cart`);
+  };
+
+  const confirmAddMeal = () => {
+    if (!pendingMeal) return;
+
     onAddToCart({
       product: {
-        id: meal.id,
-        sku: `MEAL-${meal.id}`,
-        name: meal.name,
-        description: meal.description,
-        category: meal.category,
-        price: meal.price,
+        id: pendingMeal.id,
+        sku: `MEAL-${pendingMeal.id}`,
+        name: pendingMeal.name,
+        description: pendingMeal.description,
+        category: pendingMeal.category,
+        price: pendingMeal.price,
         unit: 'serving',
-        imageUrl: meal.imageUrl,
-        allergens: meal.allergens,
-        nutritionalInfo: meal.nutritionalInfo,
+        imageUrl: pendingMeal.imageUrl,
+        allergens: pendingMeal.allergens,
+        nutritionalInfo: pendingMeal.nutritionalInfo,
         inStock: true,
       },
       quantity: 1,
     });
-    toast.success(`Added ${meal.name} to cart`);
+    toast.success(`Added ${pendingMeal.name} to cart (with allergen warning)`);
+    setPendingMeal(null);
+    setAllergenWarning('');
+  };
+
+  const cancelAddMeal = () => {
+    setPendingMeal(null);
+    setAllergenWarning('');
   };
 
   const getSeasonalMeals = (season: Season): Meal[] => {
@@ -218,6 +274,26 @@ export function SeasonalMenu({ onAddToCart }: SeasonalMenuProps) {
           )}
         </Card>
       </div>
+
+      <AlertDialog open={!!pendingMeal} onOpenChange={(open) => !open && cancelAddMeal()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Warning className="w-5 h-5" weight="fill" />
+              Allergen Warning
+            </AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line text-base">
+              {allergenWarning}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelAddMeal}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmAddMeal} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Add Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

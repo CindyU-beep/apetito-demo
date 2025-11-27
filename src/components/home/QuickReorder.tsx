@@ -2,9 +2,22 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowsClockwise, ShoppingCart, Check } from '@phosphor-icons/react';
-import { OrderHistory, CartItem } from '@/lib/types';
+import { ArrowsClockwise, ShoppingCart, Check, Warning } from '@phosphor-icons/react';
+import { OrderHistory, CartItem, OrganizationProfile } from '@/lib/types';
 import { toast } from 'sonner';
+import { useKV } from '@github/spark/hooks';
+import { MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
+import { checkAllergenViolation } from '@/lib/allergenCheck';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type QuickReorderProps = {
   orderHistory: OrderHistory[];
@@ -12,7 +25,10 @@ type QuickReorderProps = {
 };
 
 export function QuickReorder({ orderHistory, onAddToCart }: QuickReorderProps) {
+  const [profile] = useKV<OrganizationProfile>('organization-profile', MOCK_ORGANIZATION_PROFILE);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
+  const [pendingItem, setPendingItem] = useState<{item: CartItem, orderId?: string} | null>(null);
+  const [allergenWarning, setAllergenWarning] = useState<string>('');
 
   const recentOrders = [...orderHistory]
     .sort((a, b) => b.date - a.date)
@@ -26,6 +42,15 @@ export function QuickReorder({ orderHistory, onAddToCart }: QuickReorderProps) {
   };
 
   const handleAddItem = (item: CartItem, orderId: string) => {
+    const allergenCheck = checkAllergenViolation(item.product, profile || null);
+
+    if (allergenCheck.hasViolation) {
+      setPendingItem({ item, orderId });
+      setAllergenWarning(allergenCheck.warningMessage);
+      toast.error(`⚠️ Allergen Warning: ${item.product.name} contains ${allergenCheck.violatedAllergens.join(', ')}`);
+      return;
+    }
+
     onAddToCart(item);
     setAddedItems((prev) => new Set(prev).add(`${orderId}-${item.product.id}`));
     toast.success(`Added ${item.product.name} to cart`);
@@ -37,6 +62,31 @@ export function QuickReorder({ orderHistory, onAddToCart }: QuickReorderProps) {
         return newSet;
       });
     }, 2000);
+  };
+
+  const confirmAddItem = () => {
+    if (!pendingItem) return;
+
+    onAddToCart(pendingItem.item);
+    if (pendingItem.orderId) {
+      setAddedItems((prev) => new Set(prev).add(`${pendingItem.orderId}-${pendingItem.item.product.id}`));
+      
+      setTimeout(() => {
+        setAddedItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(`${pendingItem.orderId}-${pendingItem.item.product.id}`);
+          return newSet;
+        });
+      }, 2000);
+    }
+    toast.success(`Added ${pendingItem.item.product.name} to cart (with allergen warning)`);
+    setPendingItem(null);
+    setAllergenWarning('');
+  };
+
+  const cancelAddItem = () => {
+    setPendingItem(null);
+    setAllergenWarning('');
   };
 
   if (recentOrders.length === 0) {
@@ -156,6 +206,26 @@ export function QuickReorder({ orderHistory, onAddToCart }: QuickReorderProps) {
           );
         })}
       </div>
+
+      <AlertDialog open={!!pendingItem} onOpenChange={(open) => !open && cancelAddItem()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Warning className="w-5 h-5" weight="fill" />
+              Allergen Warning
+            </AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line text-base">
+              {allergenWarning}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelAddItem}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmAddItem} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Add Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
