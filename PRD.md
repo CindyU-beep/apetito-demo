@@ -1,0 +1,179 @@
+# Planning Guide
+
+Streamline institutional foodservice procurement through an intelligent, conversational interface that handles menu planning, allergen compliance, and bulk ordering in a single, efficient workflow.
+
+**Experience Qualities**:
+1. **Efficient** - Minimize time-to-order through predictive AI and natural conversation flows that understand institutional procurement needs
+2. **Trustworthy** - Build confidence through transparent allergen detection, nutritional data, and compliance validation at every step
+3. **Intelligent** - Anticipate buyer needs with recipe-aware recommendations, ingredient substitutions, and menu-based ordering
+
+**Complexity Level**: Complex Application (advanced functionality, accounts)
+  - Requires sophisticated AI integration, multi-step workflows, conversational interfaces, recipe mapping, compliance validation, and personalized recommendation engines typical of enterprise B2B platforms
+
+## Essential Features
+
+### Conversational Product Discovery
+- **Functionality**: AI-powered chat interface that understands natural language queries about products, recipes, ingredients, and dietary requirements
+- **Purpose**: Transform complex procurement searches into natural conversations, reducing cognitive load and search time for institutional buyers
+- **Trigger**: User types query in prominent chat interface or clicks suggested conversation starters
+- **Progression**: User asks question → AI interprets intent → System searches products/recipes → AI presents relevant options with context → User refines or adds to cart → AI suggests complementary items
+- **Success criteria**: Users can find products through conversation faster than traditional category navigation; 80%+ query understanding accuracy
+
+### Recipe-to-Cart Mapping
+- **Functionality**: Transform complete recipes into optimized bulk orders with automatic SKU matching and quantity calculations
+- **Purpose**: Eliminate manual recipe-to-ingredient conversion work that wastes hours of institutional buyer time
+- **Trigger**: User pastes recipe, uploads menu plan, or asks AI to "order ingredients for [dish]"
+- **Progression**: Recipe input → AI extracts ingredients & quantities → System maps to available SKUs → Displays matched products with bulk options → User reviews substitutions → Confirms and adds to cart
+- **Success criteria**: 90%+ ingredient matching rate; bulk quantity suggestions align with institutional serving sizes
+
+### Allergen & Compliance Validator
+- **Functionality**: Real-time allergen scanning across cart items with visual warnings and detailed nutritional transparency
+- **Purpose**: Protect institutions from compliance risks and health emergencies through automated, reliable allergen detection
+- **Trigger**: Automatic on cart changes; manual trigger via "Check Allergens" button
+- **Progression**: User builds cart → System scans all items for allergens → Highlights items with detected allergens (nuts, dairy, gluten, etc.) → Displays nutritional summaries → Suggests allergen-free alternatives → User makes informed decisions
+- **Success criteria**: Zero false negatives on common allergens; clear visual hierarchy for risk levels; alternative suggestions for 100% of flagged items
+
+### Personalized Menu Recommendations
+- **Functionality**: AI-driven product suggestions based on ordering history, seasonal trends, and institutional dietary patterns
+- **Purpose**: Drive repeat orders and discover relevant products through intelligent upselling that respects institutional constraints
+- **Trigger**: Displayed on dashboard, during search, and at checkout; "Build Menu for Me" action
+- **Progression**: System analyzes order history & preferences → Generates menu suggestions for specific meal types → Displays products with relevance scores → User explores recommendations → Adds items or requests variations
+- **Success criteria**: 30%+ click-through on recommendations; measurable increase in order value through suggested additions
+
+### Bulk Order Management
+- **Functionality**: Smart cart with institutional pricing, bulk optimization, and order scheduling for recurring deliveries
+- **Purpose**: Streamline high-volume ordering with pricing transparency and delivery coordination that matches institutional procurement cycles
+- **Trigger**: Add to cart actions; "Schedule Recurring Order" feature
+- **Progression**: User adds items → System suggests bulk quantities & pricing tiers → Displays total with institutional discounts → User sets delivery schedule → Reviews compliance summary → Confirms order → Receives confirmation with allergen report
+- **Success criteria**: Clear display of volume discounts; delivery scheduling reduces repeat ordering time by 50%
+
+## Edge Case Handling
+
+- **Unknown Ingredients**: AI requests clarification or suggests closest matches with confidence scores
+- **Out-of-Stock Items**: Proactive alternative suggestions with similarity rankings and compliance matching
+- **Ambiguous Allergen Data**: Display "unverified" status with contact option for manual verification
+- **Recipe Parsing Failures**: Graceful fallback to manual ingredient entry with AI-assisted autocomplete
+- **Complex Dietary Restrictions**: Multi-filter support (vegan + gluten-free + nut-free) with clear "no matches" messaging
+- **Large Orders**: Performance optimization with progressive loading and cart summarization
+- **Offline Mode**: Queue actions locally with sync indicators and retry logic
+
+## Design Direction
+
+The design should evoke trust and efficiency—a professional, clean interface that feels authoritative yet approachable, balancing data density with conversational warmth. This is an enterprise tool that respects institutional buyers' expertise while reducing their cognitive burden. Minimal interface with purposeful information hierarchy serves the mission-critical nature of compliance and ordering accuracy.
+
+## Color Selection
+
+Complementary (opposite colors) - A professional blue representing trust and efficiency paired with warm accent tones to humanize the AI interactions and highlight compliance states (warnings, confirmations).
+
+- **Primary Color**: Deep Professional Blue `oklch(0.45 0.12 250)` - Communicates reliability, institutional trust, and technological capability without feeling cold
+- **Secondary Colors**: 
+  - Neutral Gray `oklch(0.95 0.005 250)` for backgrounds - reduces eye strain during long procurement sessions
+  - Soft Blue-Gray `oklch(0.85 0.02 250)` for secondary elements - maintains visual cohesion
+- **Accent Color**: Warm Amber `oklch(0.72 0.14 70)` - Highlights CTAs, AI responses, and positive confirmations with approachable warmth
+- **Destructive/Warning**: Alert Red `oklch(0.60 0.22 25)` - Allergen warnings and critical compliance alerts
+- **Success**: Fresh Green `oklch(0.65 0.18 145)` - Compliance confirmations and successful validations
+
+**Foreground/Background Pairings**:
+- Background (Neutral `oklch(0.98 0.005 250)`): Foreground Dark `oklch(0.25 0.02 250)` - Ratio 12.8:1 ✓
+- Card (White `oklch(1 0 0)`): Card Foreground `oklch(0.25 0.02 250)` - Ratio 13.5:1 ✓
+- Primary (Deep Blue `oklch(0.45 0.12 250)`): White text `oklch(1 0 0)` - Ratio 7.2:1 ✓
+- Secondary (Soft Blue-Gray `oklch(0.85 0.02 250)`): Dark text `oklch(0.25 0.02 250)` - Ratio 9.8:1 ✓
+- Accent (Warm Amber `oklch(0.72 0.14 70)`): Dark text `oklch(0.20 0.02 250)` - Ratio 8.5:1 ✓
+- Destructive (Alert Red `oklch(0.60 0.22 25)`): White text `oklch(1 0 0)` - Ratio 5.1:1 ✓
+- Muted (Light Gray `oklch(0.92 0.005 250)`): Muted Foreground `oklch(0.50 0.02 250)` - Ratio 6.2:1 ✓
+
+## Font Selection
+
+Typography should convey precision and clarity while maintaining approachability—sans-serif fonts with excellent legibility at various scales, supporting both data-dense tables and conversational interface elements.
+
+- **Primary Typeface**: Inter - Modern, highly legible, optimized for UI with excellent number rendering for SKUs and quantities
+- **Secondary Typeface**: System UI Stack - Native feel for maximum performance in data-heavy views
+
+**Typographic Hierarchy**:
+- H1 (Page Title): Inter Bold / 32px / -0.02em letter spacing / 1.2 line height
+- H2 (Section Headers): Inter SemiBold / 24px / -0.01em / 1.3 line height
+- H3 (Subsections): Inter SemiBold / 18px / normal / 1.4 line height
+- Body (Primary Content): Inter Regular / 15px / normal / 1.6 line height
+- Body Small (Supporting Info): Inter Regular / 13px / normal / 1.5 line height
+- Labels (Form/Data Labels): Inter Medium / 13px / 0.01em / 1.4 line height
+- Captions (Metadata): Inter Regular / 12px / normal / 1.4 line height
+- Chat AI Messages: Inter Regular / 15px / normal / 1.6 line height with slightly increased spacing
+- Product SKUs/Data: Inter Medium / 14px / tabular numbers / 1.3 line height
+
+## Animations
+
+Animations should feel purposeful and professional—subtle micro-interactions that confirm actions and guide attention without delaying workflows or feeling playful in a context that demands efficiency and trust.
+
+- **Purposeful Meaning**: Motion reinforces the conversational flow of AI interactions (message typing indicators, smooth scrolls to responses) and validates critical actions like compliance checks (success pulses, warning fades)
+- **Hierarchy of Movement**: Highest priority on AI typing indicators and compliance badge updates; moderate animation on cart updates and recommendations; minimal animation on navigation to avoid distraction during data review
+
+### Animation Specifications:
+- **AI Message Appearance**: Fade-up with 200ms ease-out - feels like natural conversation flow
+- **Compliance Badge Updates**: Scale + color transition 300ms - draws attention to critical state changes
+- **Cart Item Add**: Slide-in from product position 250ms with subtle bounce - confirms action success
+- **Allergen Warnings**: Gentle pulse animation 400ms on first appearance - ensures visibility without alarm
+- **Loading States**: Skeleton shimmer for product lists, typing indicator for AI responses - maintains engagement during processing
+- **Hover States**: 150ms color/shadow transitions on interactive elements - immediate feedback
+- **Panel Transitions**: 300ms slide animations for sidebars and modals - maintains spatial context
+
+## Component Selection
+
+**Components**:
+- **Dialog/Sheet**: For recipe upload modal, allergen detail views, and compliance reports (responsive: Sheet on mobile, Dialog on desktop)
+- **Card**: Primary container for products, recipe matches, and recommendation groups with hover states
+- **Command**: Enhanced search with keyboard shortcuts for power users (Cmd+K trigger)
+- **Tabs**: Switch between "Chat", "Browse", "Orders" in main interface
+- **Badge**: Allergen indicators, compliance status, stock levels with color-coded variants
+- **Button**: Primary (add to cart), Secondary (view details), Ghost (navigation) with loading states
+- **Input/Textarea**: Chat input with auto-grow, recipe paste area, search refinement
+- **ScrollArea**: Chat history, product lists, ingredient tables for smooth scrolling in dense content
+- **Separator**: Visual breaks between chat exchanges and product groupings
+- **Avatar**: AI assistant identity with animated typing indicator
+- **Alert**: Compliance warnings, allergen notifications with icon variants
+- **Checkbox**: Multi-select for dietary filters and allergen exclusions
+- **Select/Dropdown**: Bulk quantity selection, delivery scheduling with grouped options
+- **Tooltip**: Contextual help for AI capabilities, allergen abbreviations, SKU details
+- **Skeleton**: Loading states for products and AI responses during search
+- **Progress**: Order processing steps, allergen scan progress for transparency
+- **Table**: Order history, nutritional data with sortable columns and responsive collapse
+
+**Customizations**:
+- **Product Card Component**: Custom layout combining Card + Badge + Button with image, SKU, pricing tiers, allergen badges, and quick-add functionality
+- **Chat Message Component**: Custom layout with Avatar + animation states for AI vs user messages, with embedded product cards and action buttons
+- **Compliance Summary Panel**: Custom visualization showing allergen matrix, risk levels, and nutritional totals with clear visual hierarchy
+- **Recipe Mapper**: Custom interface showing original recipe → matched products with confidence indicators and manual override options
+
+**States**:
+- **Buttons**: Default, Hover (subtle lift + shadow), Active (pressed scale), Loading (spinner), Disabled (reduced opacity)
+- **Inputs**: Default with border, Focus (accent ring + border), Error (destructive border + message), Success (success border + checkmark)
+- **Product Cards**: Default, Hover (lift + shadow increase), Selected (accent border), Loading (skeleton overlay)
+- **Allergen Badges**: Info (muted), Warning (amber), Danger (destructive) with consistent iconography
+- **Chat Input**: Idle, Typing (character count), Sending (loading), Error (shake animation + retry)
+
+**Icon Selection**:
+- **Chat/AI**: `ChatsCircle`, `Sparkle` for AI indicators, `PaperPlaneTilt` for send
+- **Products**: `ShoppingCart`, `Package`, `Barcode` for SKUs
+- **Allergen/Compliance**: `Warning`, `ShieldCheck`, `FirstAid`, `X` for clearance
+- **Food/Recipe**: `ForkKnife`, `CookingPot`, `ListChecks` for ingredients
+- **Actions**: `Plus`, `Minus`, `TrashSimple`, `ArrowsClockwise` for refresh
+- **Navigation**: `MagnifyingGlass`, `List`, `ClockCounterClockwise` for history
+- **Data**: `ChartLine`, `DownloadSimple`, `FileText` for reports
+
+**Spacing**:
+- Base unit: 4px (Tailwind's default)
+- Component internal padding: `p-4` (16px) for cards, `p-6` (24px) for dialogs
+- Section gaps: `gap-6` (24px) for product grids, `gap-4` (16px) for form groups
+- Page margins: `px-4 md:px-8 lg:px-12` responsive scaling
+- Chat messages: `space-y-4` for comfortable reading rhythm
+- Tight groups (badges, labels): `gap-2` (8px)
+
+**Mobile**:
+- Stack sidebar navigation into bottom sheet or hamburger menu
+- Chat interface remains primary view with full-screen focus
+- Product cards switch from grid (desktop: 3-4 columns) to single column stack
+- Tabs convert to horizontal scroll or dropdown selector on narrow screens
+- Tables collapse to card views with expandable rows for details
+- Sticky "Add to Cart" button at bottom for quick access
+- Command palette remains accessible but triggered via visible button instead of keyboard shortcut only
+- Form inputs expand to full width with larger touch targets (min 44px height)
+- Compliance summary becomes accordion-style expandable sections
