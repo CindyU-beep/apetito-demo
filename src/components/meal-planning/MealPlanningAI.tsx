@@ -120,11 +120,11 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
           if (mealsWithNuts.length > 0) {
             newSuggestions.push({
               type: 'warning',
-              title: `🚨 CRITICAL: Nut Products Detected`,
-              description: `${mealsWithNuts.length} meal(s) contain nuts, which are excluded for ${profile?.name}. This poses a severe allergy risk! Meals: ${mealsWithNuts.map(m => m.meal.name).join(', ')}. Please remove these immediately.`,
+              title: `🚨 CRITICAL: Allergen Violation`,
+              description: `${mealsWithNuts.length} meal(s) contain nuts: ${mealsWithNuts.map(m => m.meal.name).join(', ')}. Remove immediately.`,
               action: {
-                label: 'View Nut-Containing Meals',
-                onClick: () => toast.error(`Nut products found: ${mealsWithNuts.map(m => m.meal.name).join(', ')}`, { duration: 8000 }),
+                label: 'View Details',
+                onClick: () => toast.error(`Nut allergen violation: ${mealsWithNuts.map(m => m.meal.name).join(', ')}`, { duration: 8000 }),
               },
             });
           }
