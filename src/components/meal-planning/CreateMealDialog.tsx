@@ -42,7 +42,7 @@ export function CreateMealDialog({
     editingMeal?.meal || null
   );
   const [servings, setServings] = useState(
-    editingMeal?.servings.toString() || '1'
+    editingMeal?.servings.toString() || (profile?.servingCapacity?.toString() || '1')
   );
   const [search, setSearch] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<Meal[]>([]);
@@ -56,6 +56,17 @@ export function CreateMealDialog({
       meal.category.toLowerCase().includes(search.toLowerCase()) ||
       meal.components.some((c) => c.toLowerCase().includes(search.toLowerCase()))
   );
+
+  useEffect(() => {
+    if (open) {
+      if (editingMeal) {
+        setSelectedMeal(editingMeal.meal);
+        setServings(editingMeal.servings.toString());
+      } else {
+        setServings(profile?.servingCapacity?.toString() || '1');
+      }
+    }
+  }, [open, editingMeal, profile?.servingCapacity]);
 
   useEffect(() => {
     if (selectedMeal && profile?.preferences.allergenExclusions) {
@@ -178,7 +189,7 @@ Return ONLY a JSON object:
 
   const resetForm = () => {
     setSelectedMeal(null);
-    setServings('1');
+    setServings(profile?.servingCapacity?.toString() || '1');
     setSearch('');
     setAiSuggestions([]);
     setViewMode('browse');
@@ -391,15 +402,22 @@ Return ONLY a JSON object:
                   </AlertDescription>
                 </Alert>
               )}
-              <Label htmlFor="servings">Number of Servings</Label>
-              <Input
-                id="servings"
-                type="number"
-                min="1"
-                placeholder="1"
-                value={servings}
-                onChange={(e) => setServings(e.target.value)}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="servings">Number of Servings</Label>
+                {profile?.servingCapacity && !editingMeal && (
+                  <p className="text-xs text-muted-foreground">
+                    Default set to {profile.servingCapacity} based on {profile.name}'s capacity
+                  </p>
+                )}
+                <Input
+                  id="servings"
+                  type="number"
+                  min="1"
+                  placeholder={profile?.servingCapacity?.toString() || '1'}
+                  value={servings}
+                  onChange={(e) => setServings(e.target.value)}
+                />
+              </div>
             </div>
           )}
         </div>
