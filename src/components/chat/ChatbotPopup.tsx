@@ -24,7 +24,7 @@ export function ChatbotPopup({ onAddToCart }: ChatbotPopupProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-24 right-6 z-50 w-[400px] h-[600px] max-h-[calc(100vh-140px)]"
+            className="fixed bottom-24 right-6 z-50 w-[380px] h-[500px] max-h-[calc(100vh-140px)]"
           >
             <Card className="h-full flex flex-col shadow-2xl border-border overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-gradient-to-r from-primary/5 to-accent/5 flex-shrink-0">

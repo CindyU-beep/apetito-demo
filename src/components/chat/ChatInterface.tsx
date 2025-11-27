@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown, ArrowsClockwise } from '@phosphor-icons/react';
@@ -230,7 +229,7 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 p-3" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-3" ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="space-y-4">
             <div className="text-center py-6">
@@ -447,7 +446,7 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
             )}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       <div className="p-3 border-t border-border bg-card flex-shrink-0">
         <form
