@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { useKV } from '@github/spark/hooks';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown, ArrowsClockwise } from '@phosphor-icons/react';
-import { Message, CartItem, AgentType } from '@/lib/types';
+import { Message, CartItem, AgentType, OrganizationProfile, OrderHistory } from '@/lib/types';
 import { AGENT_CONVERSATION_STARTERS } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MealCard } from '@/components/meal-planning/MealCard';
@@ -59,6 +60,21 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
   const [selectedAgent, setSelectedAgent] = useState<AgentType | 'auto'>('auto');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  const [profile] = useKV<OrganizationProfile>('organization-profile', {
+    id: 'default',
+    name: '',
+    type: 'hospital',
+    contactEmail: '',
+    preferences: {
+      dietaryRestrictions: [],
+      allergenExclusions: [],
+    },
+    orderHistory: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+  const [orderHistory] = useKV<OrderHistory[]>('order-history', []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -84,15 +100,17 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
 
     let agentResponses: ReturnType<typeof coordinatorAgent.analyze>;
 
+    const context = {
+      userQuery: text,
+      profile: profile || undefined,
+      orderHistory: orderHistory || undefined,
+    };
+
     if (selectedAgent === 'auto') {
-      agentResponses = coordinatorAgent.analyze({
-        userQuery: text,
-      });
+      agentResponses = coordinatorAgent.analyze(context);
     } else {
       agentResponses = coordinatorAgent.analyzeWithSpecificAgent(
-        {
-          userQuery: text,
-        },
+        context,
         selectedAgent
       );
     }

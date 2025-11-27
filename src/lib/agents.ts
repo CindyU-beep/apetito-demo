@@ -1,4 +1,4 @@
-import { Product, Meal } from './types';
+import { Product, Meal, OrganizationProfile, OrderHistory } from './types';
 import { MOCK_PRODUCTS, MOCK_MEALS } from './mockData';
 
 export type AgentType = 'coordinator' | 'budget' | 'nutrition' | 'dietary' | 'meal-planning';
@@ -34,6 +34,8 @@ export type AgentContext = {
   dietaryRestrictions?: string[];
   mealType?: string;
   preferences?: string[];
+  profile?: OrganizationProfile;
+  orderHistory?: OrderHistory[];
 };
 
 class BudgetAgent {
@@ -42,25 +44,55 @@ class BudgetAgent {
 
   analyze(context: AgentContext): AgentResponse | null {
     const query = context.userQuery.toLowerCase();
+    const profile = context.profile;
     
     if (query.includes('budget') || query.includes('cheap') || query.includes('save') || query.includes('cost') || query.includes('price')) {
-      const affordableProducts = MOCK_PRODUCTS
+      let affordableProducts = MOCK_PRODUCTS
         .filter(p => p.inStock)
         .sort((a, b) => {
           const priceA = a.bulkPrice || a.price;
           const priceB = b.bulkPrice || b.price;
           return priceA - priceB;
-        })
-        .slice(0, 6);
+        });
+
+      if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+        affordableProducts = affordableProducts.filter(
+          p => !p.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+        );
+      }
+
+      affordableProducts = affordableProducts.slice(0, 6);
 
       const total = affordableProducts.reduce((sum, p) => sum + (p.bulkPrice || p.price), 0);
       const potentialSavings = affordableProducts.reduce((sum, p) => {
         return sum + (p.bulkPrice ? (p.price - p.bulkPrice) : 0);
       }, 0);
 
+      let message = `💰 **Budget Agent here!** I've found cost-effective options for you`;
+      
+      if (profile?.name) {
+        message += ` tailored for ${profile.name}`;
+      }
+      
+      if (profile?.preferences.budgetPerServing) {
+        const perServing = context.servings || profile.servingCapacity || 100;
+        const estimatedPerServing = total / perServing;
+        if (estimatedPerServing <= profile.preferences.budgetPerServing) {
+          message += `. Great news! These options stay within your $${profile.preferences.budgetPerServing.toFixed(2)}/serving budget`;
+        } else {
+          message += `. Note: These average $${estimatedPerServing.toFixed(2)}/serving, slightly above your target of $${profile.preferences.budgetPerServing.toFixed(2)}`;
+        }
+      }
+      
+      message += `. By buying in bulk, you could save $${potentialSavings.toFixed(2)}.`;
+
+      if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+        message += ` All products are free from: ${profile.preferences.allergenExclusions.join(', ')}.`;
+      }
+
       return {
         agent: 'budget',
-        message: `💰 **Budget Agent here!** I've found cost-effective options for you. By buying in bulk, you could save $${potentialSavings.toFixed(2)}. These products offer the best value for institutional kitchens.`,
+        message,
         data: {
           products: affordableProducts,
           budget: {
@@ -151,6 +183,7 @@ class DietaryAgent {
 
   analyze(context: AgentContext): AgentResponse | null {
     const query = context.userQuery.toLowerCase();
+    const profile = context.profile;
     
     const allergenKeywords = {
       'gluten': ['gluten-free', 'gluten free', 'celiac', 'no gluten'],
@@ -165,14 +198,39 @@ class DietaryAgent {
     let detectedRestrictions: string[] = [];
     let filteredProducts = MOCK_PRODUCTS.filter(p => p.inStock);
 
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      detectedRestrictions.push(...profile.preferences.allergenExclusions);
+      filteredProducts = filteredProducts.filter(
+        p => !p.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+
+    if (profile?.preferences.dietaryRestrictions && profile.preferences.dietaryRestrictions.length > 0) {
+      detectedRestrictions.push(...profile.preferences.dietaryRestrictions);
+      
+      if (profile.preferences.dietaryRestrictions.includes('vegan')) {
+        filteredProducts = filteredProducts.filter(p => 
+          !p.allergens.includes('dairy') && 
+          !p.allergens.includes('eggs') &&
+          !p.allergens.includes('fish') &&
+          !p.allergens.includes('shellfish')
+        );
+      } else if (profile.preferences.dietaryRestrictions.includes('vegetarian')) {
+        filteredProducts = filteredProducts.filter(p => 
+          !p.allergens.includes('fish') &&
+          !p.allergens.includes('shellfish')
+        );
+      }
+    }
+
     for (const [allergen, keywords] of Object.entries(allergenKeywords)) {
-      if (keywords.some(keyword => query.includes(keyword))) {
+      if (keywords.some(keyword => query.includes(keyword)) && !detectedRestrictions.includes(allergen)) {
         detectedRestrictions.push(allergen);
         filteredProducts = filteredProducts.filter(p => !p.allergens.includes(allergen as any));
       }
     }
 
-    if (query.includes('vegan')) {
+    if (query.includes('vegan') && !detectedRestrictions.includes('vegan')) {
       detectedRestrictions.push('vegan');
       filteredProducts = filteredProducts.filter(p => 
         !p.allergens.includes('dairy') && 
@@ -182,7 +240,7 @@ class DietaryAgent {
       );
     }
 
-    if (query.includes('vegetarian')) {
+    if (query.includes('vegetarian') && !detectedRestrictions.includes('vegetarian')) {
       detectedRestrictions.push('vegetarian');
       filteredProducts = filteredProducts.filter(p => 
         !p.allergens.includes('fish') &&
@@ -190,7 +248,7 @@ class DietaryAgent {
       );
     }
 
-    if (detectedRestrictions.length > 0) {
+    if (detectedRestrictions.length > 0 || profile?.preferences.specialRequirements) {
       const warnings: string[] = [];
       
       if (detectedRestrictions.includes('nuts') && filteredProducts.some(p => p.category === 'Baking')) {
@@ -199,9 +257,35 @@ class DietaryAgent {
 
       const restrictionText = detectedRestrictions.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ');
 
+      let message = `🛡️ **Dietary Agent checking in!**`;
+      
+      if (profile?.name) {
+        message += ` Based on ${profile.name}'s profile,`;
+      }
+      
+      message += ` I've screened all products`;
+      
+      if (detectedRestrictions.length > 0) {
+        message += ` for ${restrictionText} restrictions`;
+      }
+      
+      message += `. Found ${filteredProducts.length} safe options that meet your dietary requirements.`;
+
+      if (profile?.preferences.specialRequirements) {
+        message += ` Also considering: ${profile.preferences.specialRequirements}`;
+      }
+
+      if (warnings.length > 0) {
+        message += ` ⚠️ Note: ${warnings.join('. ')}`;
+      }
+
+      if (context.orderHistory && context.orderHistory.length > 0) {
+        message += ` Based on your order history, these align with your previous compliant purchases.`;
+      }
+
       return {
         agent: 'dietary',
-        message: `🛡️ **Dietary Agent checking in!** I've screened all products for ${restrictionText} restrictions. Found ${filteredProducts.length} safe options that meet your dietary requirements.${warnings.length > 0 ? ' ⚠️ Note: ' + warnings.join('. ') : ''}`,
+        message,
         data: {
           products: filteredProducts.slice(0, 6),
           dietary: {

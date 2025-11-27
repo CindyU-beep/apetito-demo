@@ -134,3 +134,24 @@ export type MealPlan = {
   days: DayPlan[];
   createdAt: number;
 };
+
+export type DietaryPreference = 'vegetarian' | 'vegan' | 'pescatarian' | 'halal' | 'kosher';
+
+export type OrganizationProfile = {
+  id: string;
+  name: string;
+  type: 'hospital' | 'school' | 'care-home' | 'university' | 'corporate' | 'other';
+  contactEmail: string;
+  contactPhone?: string;
+  address?: string;
+  servingCapacity?: number;
+  preferences: {
+    dietaryRestrictions: DietaryPreference[];
+    allergenExclusions: AllergenType[];
+    budgetPerServing?: number;
+    specialRequirements?: string;
+  };
+  orderHistory: OrderHistory[];
+  createdAt: number;
+  updatedAt: number;
+};
