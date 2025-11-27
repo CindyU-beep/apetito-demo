@@ -462,9 +462,7 @@ Keep it professional but emphasize the safety risk.`;
                   Your {plan.days.filter(d => d.meals.length > 0).length}-day meal plan contains{' '}
                   <span className="font-semibold">{nutritionalBalance.variety} unique meals</span> with an average of{' '}
                   <span className="font-semibold">{Math.round(nutritionalBalance.avgCalories)} calories</span> per day.
-                  <span className="font-semibold">{nutritionalBalance.variety} unique meals</span> with an average of{' '}
-                  <span className="font-semibold">{Math.round(nutritionalBalance.avgCalories)} calories</span> per day.
-                   nutritionalBalance.avgProtein >= 50 ? (
+                  {nutritionalBalance.avgProtein >= 50 ? (
                     <span className="text-success font-medium"> Your plan is well-balanced!</span>
                   ) : (
                     <span className="text-warning font-medium"> See recommendations below for improvements.</span>
