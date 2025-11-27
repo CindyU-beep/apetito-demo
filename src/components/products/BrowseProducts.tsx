@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,12 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MagnifyingGlass, Calendar } from '@phosphor-icons/react';
-import { MOCK_MEALS, ALLERGEN_LABELS } from '@/lib/mockData';
+import { MagnifyingGlass } from '@phosphor-icons/react';
+import { MOCK_MEALS } from '@/lib/mockData';
 import { MealCard } from './MealCard';
-import { CartItem, AllergenType, Meal, PlannedMeal } from '@/lib/types';
-import { toast } from 'sonner';
-import { format, startOfWeek, addDays } from 'date-fns';
+import { CartItem, Meal } from '@/lib/types';
 
 type BrowseProductsProps = {
   onAddToCart: (item: CartItem) => void;
@@ -24,7 +21,6 @@ type BrowseProductsProps = {
 
 export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
   const [search, setSearch] = useState('');
-  const [excludedAllergens, setExcludedAllergens] = useState<AllergenType[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAddToPlanOpen, setIsAddToPlanOpen] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
@@ -38,22 +34,10 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
       meal.category.toLowerCase().includes(search.toLowerCase()) ||
       meal.components.some((c) => c.toLowerCase().includes(search.toLowerCase()));
 
-    const matchesAllergens = excludedAllergens.every(
-      (allergen) => !meal.allergens.includes(allergen)
-    );
-
     const matchesCategory = selectedCategory === 'all' || meal.category === selectedCategory;
 
-    return matchesSearch && matchesAllergens && matchesCategory;
+    return matchesSearch && matchesCategory;
   });
-
-  const toggleAllergen = (allergen: AllergenType) => {
-    setExcludedAllergens((current) =>
-      current.includes(allergen)
-        ? current.filter((a) => a !== allergen)
-        : [...current, allergen]
-    );
-  };
 
   const handleAddToPlan = (meal: Meal) => {
     setSelectedMeal(meal);
@@ -89,39 +73,12 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
               ))}
             </div>
           </div>
-
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Exclude Allergens:</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(ALLERGEN_LABELS).map(([key, { label }]) => (
-                <div key={key} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`allergen-${key}`}
-                    checked={excludedAllergens.includes(key as AllergenType)}
-                    onCheckedChange={() => toggleAllergen(key as AllergenType)}
-                  />
-                  <Label
-                    htmlFor={`allergen-${key}`}
-                    className="text-sm cursor-pointer"
-                  >
-                    {label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </Card>
 
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{filteredMeals.length} Meals</h2>
-          {excludedAllergens.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              Filtering {excludedAllergens.length} allergen
-              {excludedAllergens.length > 1 ? 's' : ''}
-            </p>
-          )}
         </div>
 
         {filteredMeals.length === 0 ? (
