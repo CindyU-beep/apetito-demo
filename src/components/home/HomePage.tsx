@@ -10,6 +10,7 @@ import { QuickReorder } from './QuickReorder';
 import { PredictiveOrdering } from './PredictiveOrdering';
 import { SeasonalMenu } from './SeasonalMenu';
 import { TrendingMeals } from './TrendingMeals';
+import { ChristmasMenu } from './ChristmasMenu';
 import { AIInsights } from './AIInsights';
 import { CartItem, OrderHistory } from '@/lib/types';
 import { generateSampleOrders } from '@/lib/sampleData';
@@ -85,6 +86,8 @@ export function HomePage({ onAddToCart }: HomePageProps) {
       </section>
 
       <TrendingMeals onAddToCart={onAddToCart} />
+
+      <ChristmasMenu onAddToCart={onAddToCart} />
     </div>
   );
 }
