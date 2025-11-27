@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { MealPlan } from '@/lib/types';
 import { format } from 'date-fns';
-import { Calendar, Trash } from '@phosphor-icons/react';
+import { Calendar, Trash, Users } from '@phosphor-icons/react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,9 +50,14 @@ export function MealPlansList({
                     <Calendar className="w-4 h-4" />
                     {plan.name}
                   </CardTitle>
-                  <CardDescription className="mt-1">
-                    {format(new Date(plan.startDate), 'MMM d')} -{' '}
-                    {format(new Date(plan.endDate), 'MMM d, yyyy')}
+                  <CardDescription className="mt-1 space-y-1">
+                    <div>
+                      {format(new Date(plan.startDate), 'MMM d')} -{' '}
+                      {format(new Date(plan.endDate), 'MMM d, yyyy')}
+                    </div>
+                    {plan.organizationName && (
+                      <div className="text-xs">{plan.organizationName}</div>
+                    )}
                   </CardDescription>
                 </div>
                 <AlertDialog>
@@ -87,8 +93,14 @@ export function MealPlansList({
               </div>
             </CardHeader>
             <CardContent onClick={() => onSelectPlan(plan.id)}>
-              <div className="text-sm text-muted-foreground">
-                {totalMeals} {totalMeals === 1 ? 'meal' : 'meals'} planned
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span>
+                  {totalMeals} {totalMeals === 1 ? 'meal' : 'meals'} planned
+                </span>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {plan.servingSize} people
+                </Badge>
               </div>
             </CardContent>
           </Card>

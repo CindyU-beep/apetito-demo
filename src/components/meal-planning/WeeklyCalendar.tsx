@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { MealPlan, PlannedMeal, OrganizationProfile, AllergenType } from '@/lib/types';
 import { format } from 'date-fns';
-import { Plus, Minus, PencilSimple, CaretRight, TrendUp, Warning, CheckCircle, Sparkle } from '@phosphor-icons/react';
+import { Plus, Minus, PencilSimple, CaretRight, TrendUp, Warning, CheckCircle, Sparkle, Users } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState } from 'react';
@@ -49,7 +49,7 @@ export function WeeklyCalendar({
 
   const calculateDayTotal = (meals: PlannedMeal[]) => {
     return meals.reduce(
-      (sum, m) => sum + m.meal.price * m.servings,
+      (sum, m) => sum + m.meal.price * m.servings * plan.servingSize,
       0
     );
   };
@@ -91,11 +91,11 @@ export function WeeklyCalendar({
         (acc, day) => {
           const dayTotals = day.meals.reduce(
             (dayAcc, meal) => ({
-              calories: dayAcc.calories + meal.meal.nutritionalInfo.calories * meal.servings,
-              protein: dayAcc.protein + meal.meal.nutritionalInfo.protein * meal.servings,
-              carbs: dayAcc.carbs + meal.meal.nutritionalInfo.carbs * meal.servings,
-              fat: dayAcc.fat + meal.meal.nutritionalInfo.fat * meal.servings,
-              cost: dayAcc.cost + meal.meal.price * meal.servings,
+              calories: dayAcc.calories + meal.meal.nutritionalInfo.calories * meal.servings * plan.servingSize,
+              protein: dayAcc.protein + meal.meal.nutritionalInfo.protein * meal.servings * plan.servingSize,
+              carbs: dayAcc.carbs + meal.meal.nutritionalInfo.carbs * meal.servings * plan.servingSize,
+              fat: dayAcc.fat + meal.meal.nutritionalInfo.fat * meal.servings * plan.servingSize,
+              cost: dayAcc.cost + meal.meal.price * meal.servings * plan.servingSize,
             }),
             { calories: 0, protein: 0, carbs: 0, fat: 0, cost: 0 }
           );
@@ -226,7 +226,7 @@ Keep it professional but emphasize the safety risk.`;
           day.meals.forEach(plannedMeal => {
             if (plannedMeal.meal.sustainability) {
               const s = plannedMeal.meal.sustainability;
-              if (s.co2Footprint) acc.totalCO2 += s.co2Footprint * plannedMeal.servings;
+              if (s.co2Footprint) acc.totalCO2 += s.co2Footprint * plannedMeal.servings * plan.servingSize;
               if (s.regionalSourcing) acc.regionalCount++;
               if (s.organicCertified) acc.organicCount++;
               if (s.seasonalProduct) acc.seasonalCount++;
@@ -278,12 +278,24 @@ Keep it professional but emphasize the safety risk.`;
     <div className="space-y-6">
       <Card className="border-4 border-success rounded-2xl overflow-hidden">
         <div className="bg-background">
-          <div className="flex items-center gap-4 px-6 py-4 border-b-2 border-success/30">
-            <h3 className="font-semibold text-sm text-muted-foreground">
-              {plan.name}
-            </h3>
-            <div className="ml-auto text-sm text-muted-foreground">
-              ✚ Price: {plan.days.reduce((sum, day) => sum + calculateDayTotal(day.meals), 0).toFixed(2)} €
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 border-b-2 border-success/30">
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm text-muted-foreground">
+                {plan.name}
+              </h3>
+              {plan.organizationName && (
+                <p className="text-xs text-muted-foreground mt-1">{plan.organizationName}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Users className="w-4 h-4" />
+                <span className="font-medium">{plan.servingSize} people</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span>✚ Price:</span>
+                <span className="font-medium">{plan.days.reduce((sum, day) => sum + calculateDayTotal(day.meals), 0).toFixed(2)} €</span>
+              </div>
             </div>
           </div>
 

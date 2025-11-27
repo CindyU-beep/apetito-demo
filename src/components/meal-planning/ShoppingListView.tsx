@@ -34,15 +34,16 @@ export function ShoppingListView({ plan, onAddToCart }: ShoppingListViewProps) {
       day.meals.forEach((plannedMeal) => {
         const mealId = plannedMeal.meal.id;
         const existing = mealsMap.get(mealId);
+        const totalServingsForMeal = plannedMeal.servings * plan.servingSize;
 
         if (existing) {
-          existing.totalServings += plannedMeal.servings;
+          existing.totalServings += totalServingsForMeal;
           existing.days.push(day.date);
         } else {
           mealsMap.set(mealId, {
             mealName: plannedMeal.meal.name,
             category: plannedMeal.meal.category,
-            totalServings: plannedMeal.servings,
+            totalServings: totalServingsForMeal,
             price: plannedMeal.meal.price,
             checked: checkedItems.has(mealId),
             days: [day.date],
@@ -132,7 +133,8 @@ export function ShoppingListView({ plan, onAddToCart }: ShoppingListViewProps) {
                 Meal Plan Summary
               </CardTitle>
               <CardDescription>
-                Overview of all meals and servings in this plan
+                Planning for {plan.servingSize} people
+                {plan.organizationName && ` • ${plan.organizationName}`}
               </CardDescription>
             </div>
             <Button 

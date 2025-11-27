@@ -173,6 +173,8 @@ export type DayPlan = {
 export type MealPlan = {
   id: string;
   name: string;
+  organizationName?: string;
+  servingSize: number;
   startDate: string;
   endDate: string;
   days: DayPlan[];

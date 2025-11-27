@@ -1,10 +1,12 @@
 import { useKV } from '@github/spark/hooks';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, ListChecks, Sparkle } from '@phosphor-icons/react';
-import { MealPlan, CartItem, PlannedMeal } from '@/lib/types';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Plus, Calendar, ListChecks, Sparkle, Users } from '@phosphor-icons/react';
+import { MealPlan, CartItem, PlannedMeal, OrganizationProfile } from '@/lib/types';
 import { WeeklyCalendar } from './WeeklyCalendar';
 import { CreateMealDialog } from './CreateMealDialog';
 import { MealPlansList } from './MealPlansList';
@@ -12,6 +14,7 @@ import { ShoppingListView } from './ShoppingListView';
 import { MealPlanningAI } from './MealPlanningAI';
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { toast } from 'sonner';
+import { MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
 
 type MealPlannerProps = {
   onAddToCart: (item: CartItem) => void;
@@ -20,10 +23,29 @@ type MealPlannerProps = {
 export function MealPlanner({ onAddToCart }: MealPlannerProps) {
   const [mealPlans, setMealPlans] = useKV<MealPlan[]>('meal-plans', []);
   const [activePlanId, setActivePlanId] = useKV<string | null>('active-meal-plan', null);
+  const [profile] = useKV<OrganizationProfile>('organization-profile', MOCK_ORGANIZATION_PROFILE);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCreateMealOpen, setIsCreateMealOpen] = useState(false);
   const [editingMeal, setEditingMeal] = useState<PlannedMeal | null>(null);
   const [view, setView] = useState<'calendar' | 'list' | 'ai'>('calendar');
+
+  useEffect(() => {
+    if (mealPlans && mealPlans.length > 0) {
+      const needsMigration = mealPlans.some(
+        plan => plan.servingSize === undefined || plan.organizationName === undefined
+      );
+
+      if (needsMigration) {
+        setMealPlans((current = []) =>
+          current.map(plan => ({
+            ...plan,
+            servingSize: plan.servingSize ?? profile?.servingCapacity ?? 50,
+            organizationName: plan.organizationName ?? profile?.name ?? "St. Mary's Regional Hospital",
+          }))
+        );
+      }
+    }
+  }, []);
 
   const activePlan = mealPlans?.find((plan) => plan.id === activePlanId);
 
@@ -34,6 +56,8 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
     const newPlan: MealPlan = {
       id: `plan-${Date.now()}`,
       name: `Meal Plan - Week of ${format(weekStart, 'MMM d')}`,
+      organizationName: profile?.name || "St. Mary's Regional Hospital",
+      servingSize: profile?.servingCapacity || 50,
       startDate: format(weekStart, 'yyyy-MM-dd'),
       endDate: format(weekEnd, 'yyyy-MM-dd'),
       days: Array.from({ length: 7 }, (_, i) => ({
@@ -112,6 +136,24 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
     toast.success('Meal plan deleted');
   };
 
+  const updateServingSize = (newSize: number) => {
+    if (!activePlan || newSize < 1) return;
+
+    setMealPlans((current = []) =>
+      current.map((plan) => {
+        if (plan.id === activePlan.id) {
+          return {
+            ...plan,
+            servingSize: newSize,
+          };
+        }
+        return plan;
+      })
+    );
+
+    toast.success(`Serving size updated to ${newSize} people`);
+  };
+
   const applyAISuggestions = (suggestions: { date: string; meals: PlannedMeal[] }[]) => {
     if (!activePlan) return;
 
@@ -185,29 +227,49 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="space-y-1 flex-1">
               <CardTitle>{activePlan.name}</CardTitle>
               <CardDescription>
+                {activePlan.organizationName && (
+                  <span className="block mb-1">{activePlan.organizationName}</span>
+                )}
                 {format(new Date(activePlan.startDate), 'MMM d')} -{' '}
                 {format(new Date(activePlan.endDate), 'MMM d, yyyy')}
               </CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setActivePlanId(null)}>
-                View All Plans
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setSelectedDate(new Date());
-                  setEditingMeal(null);
-                  setIsCreateMealOpen(true);
-                }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Meal
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-md">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <Label htmlFor="serving-size" className="text-sm font-medium whitespace-nowrap">
+                  Serving Size:
+                </Label>
+                <Input
+                  id="serving-size"
+                  type="number"
+                  min="1"
+                  value={activePlan.servingSize}
+                  onChange={(e) => updateServingSize(parseInt(e.target.value) || 1)}
+                  className="w-20 h-8 text-center"
+                />
+                <span className="text-sm text-muted-foreground">people</span>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActivePlanId(null)}>
+                  View All Plans
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setSelectedDate(new Date());
+                    setEditingMeal(null);
+                    setIsCreateMealOpen(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Meal
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
