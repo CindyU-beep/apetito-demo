@@ -368,8 +368,8 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
           />
         </TabsContent>
         
-        <TabsContent> value="order" className="mt-6">
-              <Card>
+        <TabsContent value="order" className="mt-6">
+          <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
