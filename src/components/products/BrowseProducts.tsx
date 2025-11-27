@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MagnifyingGlass, Sparkle, X } from '@phosphor-icons/react';
+import { MagnifyingGlass, Sparkle, X, Microphone, Stop } from '@phosphor-icons/react';
 import { MOCK_MEALS } from '@/lib/mockData';
 import { MealCard } from './MealCard';
 import { CartItem, Meal } from '@/lib/types';
@@ -36,8 +36,72 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [semanticResults, setSemanticResults] = useState<SemanticSearchResult | null>(null);
   const [searchDebounceTimer, setSearchDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isVoiceSupported, setIsVoiceSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const categories = ['all', ...Array.from(new Set(MOCK_MEALS.map((m) => m.category)))];
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setIsVoiceSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setSearch(transcript);
+        toast.success('Voice recognized! Searching...');
+      };
+      
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        if (event.error === 'no-speech') {
+          toast.error('No speech detected. Try again.');
+        } else if (event.error === 'not-allowed') {
+          toast.error('Microphone access denied. Enable it in browser settings.');
+        } else {
+          toast.error('Voice recognition error. Try again.');
+        }
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const startVoiceSearch = () => {
+    if (!isVoiceSupported || !recognitionRef.current) {
+      toast.error('Voice search is not supported in this browser');
+      return;
+    }
+    
+    setIsListening(true);
+    setSearch('');
+    toast.info('Listening... Speak your search query');
+    
+    try {
+      recognitionRef.current.start();
+    } catch (error) {
+      console.error('Error starting voice recognition:', error);
+      setIsListening(false);
+      toast.error('Failed to start voice recognition');
+    }
+  };
+
+  const stopVoiceSearch = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+  };
 
   useEffect(() => {
     if (searchDebounceTimer) {
@@ -175,17 +239,40 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
                 }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-10"
+                className={`pl-10 pr-24 ${isListening ? 'border-primary border-2 animate-pulse' : ''}`}
               />
-              {search && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                {isVoiceSupported && (
+                  <Button
+                    variant={isListening ? "destructive" : "ghost"}
+                    size="sm"
+                    onClick={isListening ? stopVoiceSearch : startVoiceSearch}
+                    className="h-7 px-2"
+                  >
+                    {isListening ? (
+                      <Stop className="w-4 h-4" weight="fill" />
+                    ) : (
+                      <Microphone className="w-4 h-4" weight="fill" />
+                    )}
+                  </Button>
+                )}
+                {search && (
+                  <button
+                    onClick={clearSearch}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
+
+            {isListening && (
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                Listening... Speak your search query
+              </div>
+            )}
 
             {isSemanticSearchEnabled && (
               <div className="bg-accent/50 border border-primary/20 rounded-lg p-3">
