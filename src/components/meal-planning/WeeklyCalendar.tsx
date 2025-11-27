@@ -299,8 +299,8 @@ Keep it professional but emphasize the safety risk.`;
             </div>
           </div>
 
-          <ScrollArea className="w-full">
-            <div className="flex">
+          <ScrollArea className="w-full overflow-x-auto">
+            <div className="flex min-w-max">
               {plan.days.map((day, dayIndex) => {
                 const dayTotal = calculateDayTotal(day.meals);
                 const isLastDay = dayIndex === plan.days.length - 1;
@@ -405,7 +405,7 @@ Keep it professional but emphasize the safety risk.`;
 
                     <div className="border-t-2 border-success/30 px-3 py-2 bg-muted/20">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold">TG</span>
+                        <span className="font-semibold">Total</span>
                         <span className="font-bold">{dayTotal.toFixed(2)} €</span>
                       </div>
                     </div>
