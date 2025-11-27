@@ -73,7 +73,7 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
         dietaryTags: meal.dietaryTags,
       }));
 
-      const prompt = spark.llmPrompt`You are an intelligent meal search assistant. Analyze the user's search query and find the most relevant meals from the catalog based on semantic meaning, not just keyword matching.
+      const promptText = `You are an intelligent meal search assistant. Analyze the user's search query and find the most relevant meals from the catalog based on semantic meaning, not just keyword matching.
 
 User Query: "${query}"
 
@@ -97,7 +97,7 @@ Return ONLY a valid JSON object with this exact structure:
 
 Include up to 15 most relevant meals, ordered by relevance. Confidence should be 0-1.`;
 
-      const response = await spark.llm(prompt, 'gpt-4o-mini', true);
+      const response = await window.spark.llm(promptText, 'gpt-4o-mini', true);
       const result = JSON.parse(response) as SemanticSearchResult;
       
       setSemanticResults(result);
