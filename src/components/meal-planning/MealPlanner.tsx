@@ -349,9 +349,7 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
           </TabsTrigger>
         </TabsList>
 
-        
-
-        <TabsContent value="calendar" className="mt-6">
+        <TabsContent value="calendar" className="mt-6 space-y-6">
           <WeeklyCalendar
             plan={activePlan}
             onAddMeal={(date) => {
@@ -366,30 +364,27 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
             }}
             onRemoveMeal={removeMealFromPlan}
           />
-        </TabsContent>
-        
-        <TabsContent value="order" className="mt-6">
-          <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <p className="text-sm font-medium">Ready to order your meal plan?</p>
-              <p className="text-sm text-muted-foreground">
-                Add all meals from this plan to your cart
-              </p>
-            </div>
-            <Button 
-              onClick={placeOrder}
-              size="lg"
-              className="flex items-center gap-2"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              Place Order
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex-1 text-center sm:text-left">
+                  <p className="text-base font-semibold mb-1">Ready to order your meal plan?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Add all meals from this plan to your cart
+                  </p>
+                </div>
+                <Button 
+                  onClick={placeOrder}
+                  size="lg"
+                  className="flex items-center gap-2 w-full sm:w-auto"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  Place Order
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="ai" className="mt-6">
