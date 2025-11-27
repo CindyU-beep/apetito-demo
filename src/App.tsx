@@ -1,7 +1,6 @@
 import { useKV } from '@github/spark/hooks';
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { House, ShoppingCart, ClockCounterClockwise, Calendar } from '@phosphor-icons/react';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { HomePage } from '@/components/home/HomePage';
 import { BrowseProducts } from '@/components/products/BrowseProducts';
 import { OrderHistory } from '@/components/orders/OrderHistory';
@@ -58,29 +57,12 @@ function App() {
       <Header 
         cartCount={(cart || []).reduce((sum, item) => sum + item.quantity, 0)}
         onCartClick={() => setIsCartOpen(true)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
       
       <main className="container mx-auto px-4 md:px-8 lg:px-12 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 mb-6">
-            <TabsTrigger value="home" className="flex items-center gap-2">
-              <House className="w-4 h-4" />
-              <span className="hidden sm:inline">Home</span>
-            </TabsTrigger>
-            <TabsTrigger value="browse" className="flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              <span className="hidden sm:inline">Meals</span>
-            </TabsTrigger>
-            <TabsTrigger value="meal-planning" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Plan</span>
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="flex items-center gap-2">
-              <ClockCounterClockwise className="w-4 h-4" />
-              <span className="hidden sm:inline">Orders</span>
-            </TabsTrigger>
-          </TabsList>
-
           <TabsContent value="home" className="mt-0">
             <HomePage onAddToCart={addToCart} />
           </TabsContent>
