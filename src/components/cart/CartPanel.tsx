@@ -300,8 +300,8 @@ export function CartPanel({
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="analysis" className="flex-1 flex flex-col mt-0">
-                <ScrollArea className="flex-1 px-6">
+              <TabsContent value="analysis" className="flex-1 flex flex-col mt-0 overflow-hidden">
+                <ScrollArea className="flex-1 px-6 h-full">
                   <div className="space-y-6 pb-4">
                     <Card className="p-5 bg-gradient-to-br from-primary/5 to-accent/5">
                       <div className="flex items-center gap-3 mb-3">
