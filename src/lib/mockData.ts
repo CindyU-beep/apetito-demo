@@ -261,6 +261,45 @@ export const CONVERSATION_STARTERS = [
   "What are my options for vegan breakfast?",
 ];
 
+export const AGENT_CONVERSATION_STARTERS: Record<string, string[]> = {
+  auto: [
+    "Find me budget-friendly protein options",
+    "I need a gluten-free meal plan for lunch",
+    "Show me high-protein, low-fat products",
+    "What are my options for vegan breakfast?",
+  ],
+  coordinator: [
+    "Help me plan a week of meals",
+    "I need products for 50 people",
+    "What's the best way to save money?",
+    "Show me balanced nutrition options",
+  ],
+  budget: [
+    "What are your cheapest bulk options?",
+    "Find me the best deals this week",
+    "Show me cost per serving for pasta",
+    "How much can I save buying in bulk?",
+  ],
+  nutrition: [
+    "I need high-protein meal options",
+    "Show me low-calorie products",
+    "What are good sources of healthy fats?",
+    "Find balanced meals under 500 calories",
+  ],
+  dietary: [
+    "I need dairy-free alternatives",
+    "Show me gluten-free options",
+    "Find vegan protein sources",
+    "What products are nut-free?",
+  ],
+  'meal-planning': [
+    "Create a vegetarian lunch menu",
+    "Plan breakfast for 30 people",
+    "Show me complete dinner recipes",
+    "I need ingredients for pasta dishes",
+  ],
+};
+
 export const MOCK_MEALS: Meal[] = [
   {
     id: 'meal-1',

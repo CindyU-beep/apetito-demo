@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown, ArrowsClockwise } from '@phosphor-icons/react';
 import { Message, CartItem, AgentType } from '@/lib/types';
-import { CONVERSATION_STARTERS } from '@/lib/mockData';
+import { AGENT_CONVERSATION_STARTERS } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MealCard } from '@/components/meal-planning/MealCard';
 import { coordinatorAgent } from '@/lib/agents';
@@ -274,7 +274,7 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
             <div className="space-y-2">
               <p className="text-xs font-medium">Try asking:</p>
               <div className="grid grid-cols-1 gap-2">
-                {CONVERSATION_STARTERS.map((starter, i) => (
+                {AGENT_CONVERSATION_STARTERS[selectedAgent].map((starter, i) => (
                   <Button
                     key={i}
                     variant="outline"
