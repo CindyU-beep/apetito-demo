@@ -7,6 +7,7 @@ import { OrderHistory } from '@/components/orders/OrderHistory';
 import { CartPanel } from '@/components/cart/CartPanel';
 import { Header } from '@/components/layout/Header';
 import { MealPlanner } from '@/components/meal-planning/MealPlanner';
+import { ChatbotPopup } from '@/components/chat/ChatbotPopup';
 import { CartItem } from '@/lib/types';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -88,6 +89,8 @@ function App() {
         onUpdateQuantity={updateCartQuantity}
         onClearCart={clearCart}
       />
+
+      <ChatbotPopup onAddToCart={addToCart} />
 
       <Toaster />
     </div>

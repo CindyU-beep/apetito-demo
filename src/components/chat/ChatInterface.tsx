@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sparkle, PaperPlaneTilt, User } from '@phosphor-icons/react';
@@ -106,12 +104,7 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
   };
 
   return (
-    <Card className="h-[calc(100vh-220px)] flex flex-col">
-      <div className="p-4 border-b border-border">
-        <h2 className="font-semibold text-lg">AI Procurement Assistant</h2>
-        <p className="text-sm text-muted-foreground">Ask about products, recipes, or dietary requirements</p>
-      </div>
-
+    <div className="h-full flex flex-col">
       <ScrollArea className="flex-1 p-4">
         {messages.length === 0 ? (
           <div className="space-y-6">
@@ -235,6 +228,6 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
           </Button>
         </form>
       </div>
-    </Card>
+    </div>
   );
 }
