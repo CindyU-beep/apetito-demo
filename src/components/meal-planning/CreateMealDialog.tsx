@@ -63,40 +63,6 @@ export function CreateMealDialog({
         profile.preferences.allergenExclusions.includes(allergen)
       );
       setAllergenWarning(violatedAllergens);
-      
-      if (violatedAllergens.length > 0) {
-        const hasNuts = violatedAllergens.includes('nuts');
-        
-        if (hasNuts) {
-          toast.error(
-            `🚨 CRITICAL ALLERGEN ALERT: "${selectedMeal.name}" contains NUTS which are STRICTLY EXCLUDED for ${profile.name}. Nut allergies can cause severe anaphylaxis and are life-threatening, especially in ${profile.type} settings. STRONGLY RECOMMEND removing this selection immediately.`,
-            { 
-              duration: 12000,
-              action: {
-                label: 'Remove Meal',
-                onClick: () => {
-                  setSelectedMeal(null);
-                  toast.success('Meal removed for safety');
-                }
-              }
-            }
-          );
-        } else {
-          toast.warning(
-            `⚠️ ALLERGEN WARNING: "${selectedMeal.name}" contains ${violatedAllergens.join(', ')} which ${violatedAllergens.length === 1 ? 'is' : 'are'} restricted for ${profile.name}. This could cause allergic reactions for individuals at your ${profile.type}. Please consider removing this meal.`,
-            { 
-              duration: 8000,
-              action: {
-                label: 'Remove Meal',
-                onClick: () => {
-                  setSelectedMeal(null);
-                  toast.success('Meal removed for safety');
-                }
-              }
-            }
-          );
-        }
-      }
     } else {
       setAllergenWarning([]);
     }
@@ -191,103 +157,6 @@ Return ONLY a JSON object:
       return;
     }
 
-    if (allergenWarning.length > 0 && profile) {
-      const hasNuts = allergenWarning.includes('nuts');
-      const severityLevel = hasNuts ? 'CRITICAL SAFETY ALERT' : 'SAFETY WARNING';
-      
-      const promptText = `You are an AI dietary safety assistant specializing in institutional food service safety compliance. 
-
-A meal planner at ${profile.name} (a ${profile.type} facility) is attempting to add a meal that contains allergens explicitly excluded in their organization's safety profile.
-
-ORGANIZATION CONTEXT:
-- Name: ${profile.name}
-- Type: ${profile.type}
-- Excluded Allergens (MUST NOT SERVE): ${profile.preferences.allergenExclusions.join(', ')}
-- Serving Capacity: ${profile.servingCapacity || 'Not specified'} people
-
-MEAL BEING ADDED:
-- Meal Name: ${selectedMeal.name}
-- Contains Allergens: ${selectedMeal.allergens.join(', ')}
-- VIOLATING ALLERGENS: ${allergenWarning.join(', ')}
-
-${hasNuts ? `
-⚠️ CRITICAL ESCALATION: This meal contains NUTS
-- Nut allergies are among the most dangerous food allergens
-- Can trigger severe anaphylactic shock within minutes
-- Life-threatening, especially for vulnerable populations in ${profile.type} settings
-- Cross-contamination risks are high and can affect multiple people
-- Legal liability and duty of care considerations are paramount
-` : `
-⚠️ ALLERGEN VIOLATION DETECTED
-- These allergens are restricted for documented safety reasons
-- Could cause allergic reactions ranging from mild to severe
-- In ${profile.type} settings, vulnerable individuals may not be able to self-advocate
-- Safety compliance is a legal and ethical requirement
-`}
-
-Generate a ${hasNuts ? 'strongly worded, urgent' : 'firm but professional'} warning message (3-4 sentences) that:
-
-1. Opens with "${severityLevel}:" followed by a clear statement of the violation
-2. ${hasNuts ? 'Emphasizes the LIFE-THREATENING nature of nut allergies and the severe consequences of serving this meal' : 'Explains the health risks and why this allergen was excluded'}
-3. References the specific context of ${profile.type} facilities and duty of care to vulnerable populations
-4. ${hasNuts ? 'STRONGLY URGES immediate removal with language like "This meal MUST NOT be added" and "We strongly recommend selecting a different meal"' : 'Firmly recommends removing this meal or verifying if the allergen exclusion needs updating'}
-5. ${hasNuts ? 'Ends with a final urgent plea to prioritize safety over convenience' : 'Ends with a reminder about organizational safety policies'}
-
-${hasNuts ? 'Use CAPITALIZED words for emphasis on critical safety points. Make this unmistakably serious and urgent.' : 'Be clear and direct about the safety concern while remaining professional.'}
-
-Return ONLY the warning message text, no JSON, no extra formatting.`;
-
-      try {
-        const prompt = window.spark.llmPrompt([promptText], []);
-        const aiWarning = await window.spark.llm(prompt, 'gpt-4o', false);
-        
-        toast.error(aiWarning, {
-          duration: hasNuts ? 15000 : 10000,
-          action: {
-            label: hasNuts ? 'Remove Meal (Recommended)' : 'Remove Meal',
-            onClick: () => {
-              setSelectedMeal(null);
-              toast.success('Meal removed for safety compliance');
-            },
-          },
-          cancel: {
-            label: 'Add Anyway (Override)',
-            onClick: () => {
-              const plannedMeal: PlannedMeal = {
-                id: editingMeal?.id || `planned-${Date.now()}`,
-                meal: selectedMeal,
-                mealType: 'lunch',
-                servings: parseInt(servings) || 1,
-              };
-              onSave(plannedMeal);
-              resetForm();
-              toast.warning(`${selectedMeal.name} added with allergen override. Please document this decision.`, { duration: 8000 });
-            },
-          },
-        });
-        return;
-      } catch (error) {
-        console.error('Error generating AI warning:', error);
-        
-        toast.error(
-          hasNuts 
-            ? `🚨 CRITICAL SAFETY ALERT: "${selectedMeal.name}" contains NUTS which are STRICTLY PROHIBITED for ${profile.name}. Nut allergies can cause FATAL anaphylactic reactions. This meal MUST NOT be served in ${profile.type} settings. STRONGLY RECOMMEND removing this selection immediately to protect lives.`
-            : `⚠️ SAFETY WARNING: "${selectedMeal.name}" contains ${allergenWarning.join(', ')} which are excluded allergens for ${profile.name}. Adding this meal violates your organization's safety policies and could cause allergic reactions. Please remove this meal or verify your allergen exclusion settings.`,
-          {
-            duration: hasNuts ? 15000 : 10000,
-            action: {
-              label: hasNuts ? 'Remove Meal (Recommended)' : 'Remove Meal',
-              onClick: () => {
-                setSelectedMeal(null);
-                toast.success('Meal removed for safety compliance');
-              },
-            },
-          }
-        );
-        return;
-      }
-    }
-
     const plannedMeal: PlannedMeal = {
       id: editingMeal?.id || `planned-${Date.now()}`,
       meal: selectedMeal,
@@ -297,6 +166,14 @@ Return ONLY the warning message text, no JSON, no extra formatting.`;
 
     onSave(plannedMeal);
     resetForm();
+    
+    if (allergenWarning.length > 0 && profile) {
+      const hasNuts = allergenWarning.includes('nuts');
+      toast.warning(
+        `Note: "${selectedMeal.name}" contains ${allergenWarning.join(', ')} which ${allergenWarning.length === 1 ? 'is' : 'are'} in your excluded allergens list for ${profile.name}.`,
+        { duration: 5000 }
+      );
+    }
   };
 
   const resetForm = () => {
