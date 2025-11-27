@@ -218,15 +218,37 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Search</Label>
-              <Button
-                variant={isSemanticSearchEnabled ? 'default' : 'outline'}
-                size="sm"
-                onClick={toggleSemanticSearch}
-                className="gap-2"
-              >
-                <Sparkle className={isSemanticSearchEnabled ? 'fill-current' : ''} weight={isSemanticSearchEnabled ? 'fill' : 'regular'} />
-                AI Search {isSemanticSearchEnabled ? 'On' : 'Off'}
-              </Button>
+              <div className="flex items-center gap-2">
+                {isVoiceSupported && (
+                  <Button
+                    variant={isListening ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={isListening ? stopVoiceSearch : startVoiceSearch}
+                    className="gap-2"
+                  >
+                    {isListening ? (
+                      <>
+                        <Stop className="w-4 h-4" weight="fill" />
+                        Stop
+                      </>
+                    ) : (
+                      <>
+                        <Microphone className="w-4 h-4" weight="fill" />
+                        Voice
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button
+                  variant={isSemanticSearchEnabled ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={toggleSemanticSearch}
+                  className="gap-2"
+                >
+                  <Sparkle className={isSemanticSearchEnabled ? 'fill-current' : ''} weight={isSemanticSearchEnabled ? 'fill' : 'regular'} />
+                  AI Search {isSemanticSearchEnabled ? 'On' : 'Off'}
+                </Button>
+              </div>
             </div>
             
             <div className="relative">
@@ -239,32 +261,16 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
                 }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`pl-10 pr-24 ${isListening ? 'border-primary border-2 animate-pulse' : ''}`}
+                className={`pl-10 pr-10 ${isListening ? 'border-primary border-2 animate-pulse' : ''}`}
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                {isVoiceSupported && (
-                  <Button
-                    variant={isListening ? "destructive" : "ghost"}
-                    size="sm"
-                    onClick={isListening ? stopVoiceSearch : startVoiceSearch}
-                    className="h-7 px-2"
-                  >
-                    {isListening ? (
-                      <Stop className="w-4 h-4" weight="fill" />
-                    ) : (
-                      <Microphone className="w-4 h-4" weight="fill" />
-                    )}
-                  </Button>
-                )}
-                {search && (
-                  <button
-                    onClick={clearSearch}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+              {search && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {isListening && (
