@@ -292,13 +292,13 @@ export function WeeklyCalendar({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkle className="w-5 h-5 text-primary" weight="fill" />
-            Nutritional Analysis
+            Apetito Analysis
           </CardTitle>
           <CardDescription>
-            Analyze your weekly meal plan for nutritional balance and optimization
+            Get comprehensive insights on your weekly meal plan
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <Button
             variant="outline"
             onClick={analyzeMealPlan}
@@ -320,40 +320,62 @@ export function WeeklyCalendar({
           </Button>
 
           {nutritionalBalance && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div className="text-center p-3 bg-background rounded-lg border">
-                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCalories)}</div>
-                  <div className="text-xs text-muted-foreground">kcal/day</div>
-                </div>
-                <div className="text-center p-3 bg-background rounded-lg border">
-                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgProtein)}g</div>
-                  <div className="text-xs text-muted-foreground">protein/day</div>
-                </div>
-                <div className="text-center p-3 bg-background rounded-lg border">
-                  <div className="text-xl font-bold">{nutritionalBalance.variety}</div>
-                  <div className="text-xs text-muted-foreground">unique meals</div>
-                </div>
-                <div className="text-center p-3 bg-background rounded-lg border">
-                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCarbs)}g</div>
-                  <div className="text-xs text-muted-foreground">carbs/day</div>
-                </div>
-                <div className="text-center p-3 bg-background rounded-lg border">
-                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgFat)}g</div>
-                  <div className="text-xs text-muted-foreground">fat/day</div>
-                </div>
-                <div className="text-center p-3 bg-background rounded-lg border">
-                  <div className="text-xl font-bold">€{nutritionalBalance.costPerDay.toFixed(2)}</div>
-                  <div className="text-xs text-muted-foreground">cost/day</div>
+            <div className="space-y-6">
+              <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-primary/20">
+                <h4 className="text-sm font-semibold mb-2 text-primary">Summary</h4>
+                <p className="text-sm leading-relaxed">
+                  Your {plan.days.filter(d => d.meals.length > 0).length}-day meal plan contains{' '}
+                  <span className="font-semibold">{nutritionalBalance.variety} unique meals</span> with an average of{' '}
+                  <span className="font-semibold">{Math.round(nutritionalBalance.avgCalories)} calories</span> per day.
+                  Daily budget averages <span className="font-semibold">€{nutritionalBalance.costPerDay.toFixed(2)}</span>.
+                  {nutritionalBalance.avgCalories >= 1800 && nutritionalBalance.avgCalories <= 2200 && 
+                   nutritionalBalance.avgProtein >= 50 ? (
+                    <span className="text-success font-medium"> Your plan is well-balanced!</span>
+                  ) : (
+                    <span className="text-warning font-medium"> See recommendations below for improvements.</span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <TrendUp className="w-4 h-4 text-primary" />
+                  Nutritional Breakdown
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="text-center p-3 bg-background rounded-lg border">
+                    <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCalories)}</div>
+                    <div className="text-xs text-muted-foreground">kcal/day</div>
+                  </div>
+                  <div className="text-center p-3 bg-background rounded-lg border">
+                    <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgProtein)}g</div>
+                    <div className="text-xs text-muted-foreground">protein/day</div>
+                  </div>
+                  <div className="text-center p-3 bg-background rounded-lg border">
+                    <div className="text-xl font-bold">{nutritionalBalance.variety}</div>
+                    <div className="text-xs text-muted-foreground">unique meals</div>
+                  </div>
+                  <div className="text-center p-3 bg-background rounded-lg border">
+                    <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCarbs)}g</div>
+                    <div className="text-xs text-muted-foreground">carbs/day</div>
+                  </div>
+                  <div className="text-center p-3 bg-background rounded-lg border">
+                    <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgFat)}g</div>
+                    <div className="text-xs text-muted-foreground">fat/day</div>
+                  </div>
+                  <div className="text-center p-3 bg-background rounded-lg border">
+                    <div className="text-xl font-bold">€{nutritionalBalance.costPerDay.toFixed(2)}</div>
+                    <div className="text-xs text-muted-foreground">cost/day</div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {suggestions.length > 0 && (
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3">
               <h4 className="text-sm font-semibold flex items-center gap-2">
-                <TrendUp className="w-4 h-4 text-primary" />
+                <Sparkle className="w-4 h-4 text-primary" weight="fill" />
                 Insights & Recommendations
               </h4>
               <div className="space-y-2">
