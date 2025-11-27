@@ -34,12 +34,33 @@ export type CartItem = {
   quantity: number;
 };
 
+export type AgentType = 'coordinator' | 'budget' | 'nutrition' | 'dietary' | 'meal-planning';
+
 export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
   products?: Product[];
+  meals?: Meal[];
+  agent?: AgentType;
+  metadata?: {
+    budget?: {
+      total: number;
+      perServing: number;
+      savings?: number;
+    };
+    nutrition?: {
+      calories: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+    };
+    dietary?: {
+      restrictions: string[];
+      warnings: string[];
+    };
+  };
 };
 
 export type RecipeIngredient = {

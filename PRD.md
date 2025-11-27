@@ -19,12 +19,12 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Progression**: User views hero carousel highlighting current promotions → Reviews AI insights showing order statistics → Explores tabbed interface with Predictive/Reorder/Seasonal options → Browses AI-suggested meals with confidence scores → Reviews trending meals section → Adds items directly to cart → Navigates to other sections as needed
 - **Success criteria**: Users find relevant meals within 3 clicks; 40%+ of orders initiated from home page suggestions; AI predictions achieve 75%+ relevance rating from users
 
-### Conversational Product Discovery
-- **Functionality**: AI-powered chat interface that understands natural language queries about products, recipes, ingredients, and dietary requirements
-- **Purpose**: Transform complex procurement searches into natural conversations, reducing cognitive load and search time for institutional buyers
-- **Trigger**: User types query in prominent chat interface or clicks suggested conversation starters
-- **Progression**: User asks question → AI interprets intent → System searches products/recipes → AI presents relevant options with context → User refines or adds to cart → AI suggests complementary items
-- **Success criteria**: Users can find products through conversation faster than traditional category navigation; 80%+ query understanding accuracy
+### Multi-Agent Conversational Product Discovery
+- **Functionality**: AI-powered chat interface with specialized agents (Budget, Nutrition, Dietary, Meal Planning, Coordinator) that collaborate to provide comprehensive guidance on products, recipes, ingredients, and dietary requirements through natural language
+- **Purpose**: Transform complex procurement searches into intelligent conversations where specialized agents work together to address budget constraints, nutritional goals, dietary restrictions, and menu planning simultaneously, reducing cognitive load and decision time for institutional buyers
+- **Trigger**: User types query in chatbot popup (bottom-right corner) or clicks suggested conversation starters
+- **Progression**: User asks question → Coordinator Agent analyzes query → Routes to relevant specialized agents → Each applicable agent analyzes independently → Budget Agent provides cost optimization and bulk deals → Nutrition Agent ensures balanced nutritional profiles → Dietary Agent validates allergen compliance and restrictions → Meal Planning Agent suggests complete meals and menus → Agents present responses sequentially with color-coded avatars and badges → Display metadata cards (budget summaries, nutrition averages, dietary compliance) → Show relevant products and meals → User refines query or adds items to cart → Agents suggest complementary items
+- **Success criteria**: Multi-agent responses provide comprehensive guidance in single conversation; 90%+ relevance when multiple agents respond; Users identify optimal products 40% faster with agent collaboration; Clear visual distinction between agent types; Metadata summaries (budget/nutrition/dietary) display accurately
 
 ### Recipe-to-Cart Mapping
 - **Functionality**: Transform complete recipes into optimized bulk orders with automatic SKU matching and quantity calculations
@@ -190,7 +190,8 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 
 **Icon Selection**:
 - **Home/Navigation**: `House` for home page, `ChatsCircle` for chat, `Calendar` for planning
-- **AI Features**: `Sparkle` for AI indicators, `TrendUp` for predictive, `ArrowsClockwise` for reorder, `Fire` for trending
+- **AI Features**: `Sparkle` for AI indicators and coordinator, `TrendUp` for predictive, `ArrowsClockwise` for reorder, `Fire` for trending
+- **Specialized Agents**: `CurrencyDollar` for Budget Agent, `ForkKnife` for Nutrition Agent, `ShieldCheck` for Dietary Agent, `ChefHat` for Meal Planning Agent
 - **Seasonal**: `Snowflake` for winter/Christmas, `Sun` for summer, `Leaf` for spring, `CloudRain` for autumn
 - **Insights**: `ChartLine` for analytics, `ShoppingCart` for orders, `Clock` for time-based data
 - **Chat/AI**: `ChatsCircle`, `Sparkle` for AI indicators, `PaperPlaneTilt` for send

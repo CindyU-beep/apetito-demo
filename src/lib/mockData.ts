@@ -255,10 +255,10 @@ export const ALLERGEN_LABELS: Record<string, { label: string; color: string }> =
 };
 
 export const CONVERSATION_STARTERS = [
-  "Find gluten-free pasta options",
-  "I need ingredients for 50 servings of lasagna",
-  "Show me dairy-free alternatives",
-  "What's in stock for Asian cuisine?",
+  "Find me budget-friendly protein options",
+  "I need a gluten-free meal plan for lunch",
+  "Show me high-protein, low-fat products",
+  "What are my options for vegan breakfast?",
 ];
 
 export const MOCK_MEALS: Meal[] = [
