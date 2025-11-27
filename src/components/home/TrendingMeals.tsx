@@ -228,7 +228,7 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
                     className="w-full font-semibold"
                     size="sm"
                   >
-                    Save to list
+                    Add to plan
                   </Button>
                 </div>
               </CardContent>
