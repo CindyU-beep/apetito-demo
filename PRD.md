@@ -12,6 +12,13 @@ Streamline institutional foodservice procurement through an intelligent, convers
 
 ## Essential Features
 
+### Home Page with AI-Powered Ordering
+- **Functionality**: Central hub featuring hero carousel with seasonal promotions, AI-driven quick reorder, predictive ordering suggestions, seasonal menus (including Christmas specials), trending meals, and ordering insights dashboard
+- **Purpose**: Provide institutional buyers with an intelligent, personalized entry point that surfaces the most relevant ordering options based on their patterns, the current season, and market trends
+- **Trigger**: User lands on application or navigates to "Home" tab
+- **Progression**: User views hero carousel highlighting current promotions → Reviews AI insights showing order statistics → Explores tabbed interface with Predictive/Reorder/Seasonal options → Browses AI-suggested meals with confidence scores → Reviews trending meals section → Adds items directly to cart → Navigates to other sections as needed
+- **Success criteria**: Users find relevant meals within 3 clicks; 40%+ of orders initiated from home page suggestions; AI predictions achieve 75%+ relevance rating from users
+
 ### Conversational Product Discovery
 - **Functionality**: AI-powered chat interface that understands natural language queries about products, recipes, ingredients, and dietary requirements
 - **Purpose**: Transform complex procurement searches into natural conversations, reducing cognitive load and search time for institutional buyers
@@ -138,11 +145,12 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 ## Component Selection
 
 **Components**:
+- **Carousel**: Hero carousel with auto-play for seasonal promotions, Christmas menus, and featured content with navigation controls
 - **Dialog/Sheet**: For recipe upload modal, allergen detail views, and compliance reports (responsive: Sheet on mobile, Dialog on desktop)
-- **Card**: Primary container for products, recipe matches, and recommendation groups with hover states
+- **Card**: Primary container for products, recipe matches, recommendation groups, insights cards, and meal displays with hover states
 - **Command**: Enhanced search with keyboard shortcuts for power users (Cmd+K trigger)
-- **Tabs**: Switch between "Chat", "Browse", "Orders" in main interface
-- **Badge**: Allergen indicators, compliance status, stock levels with color-coded variants
+- **Tabs**: Switch between "Home", "Chat", "Browse", "Orders" in main interface; also used for Predictive/Reorder/Seasonal on home page
+- **Badge**: Allergen indicators, compliance status, stock levels, confidence scores, trending indicators with color-coded variants
 - **Button**: Primary (add to cart), Secondary (view details), Ghost (navigation) with loading states
 - **Input/Textarea**: Chat input with auto-grow, recipe paste area, search refinement
 - **ScrollArea**: Chat history, product lists, ingredient tables for smooth scrolling in dense content
@@ -157,6 +165,13 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 - **Table**: Order history, nutritional data with sortable columns and responsive collapse
 
 **Customizations**:
+- **Hero Carousel Component**: Auto-rotating slides with manual navigation, featuring seasonal promotions, special menus, and educational content with CTA buttons
+- **AI Insights Dashboard**: Stats cards showing total orders, average order value, completion rate, and time since last order with icon-driven visual hierarchy
+- **Predictive Meal Cards**: Meal cards enhanced with AI confidence badges showing match percentage and reasoning for recommendations
+- **Quick Reorder Cards**: Order history cards with expandable item lists, individual item re-add buttons, and bulk reorder functionality
+- **Seasonal Menu Browser**: Season-themed card layouts with winter/spring/summer/autumn filtering and special holiday menu sections (Christmas, Easter)
+- **Trending Section**: Grid of popular meals with ranking badges (#1, #2, #3 trending indicators)
+- **Simple Meal Card Component**: Streamlined meal card for home page with quick add-to-cart, dietary tags, allergen badges, and nutritional preview
 - **Product Card Component**: Custom layout combining Card + Badge + Button with image, SKU, pricing tiers, allergen badges, and quick-add functionality
 - **Meal Card Component**: Custom layout for complete meals showing image, name, components list, dietary tags, nutritional info, allergen badges, and "Add to Plan" action
 - **Chat Message Component**: Custom layout with Avatar + animation states for AI vs user messages, with embedded product cards and action buttons
@@ -174,13 +189,17 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 - **Chat Input**: Idle, Typing (character count), Sending (loading), Error (shake animation + retry)
 
 **Icon Selection**:
+- **Home/Navigation**: `House` for home page, `ChatsCircle` for chat, `Calendar` for planning
+- **AI Features**: `Sparkle` for AI indicators, `TrendUp` for predictive, `ArrowsClockwise` for reorder, `Fire` for trending
+- **Seasonal**: `Snowflake` for winter/Christmas, `Sun` for summer, `Leaf` for spring, `CloudRain` for autumn
+- **Insights**: `ChartLine` for analytics, `ShoppingCart` for orders, `Clock` for time-based data
 - **Chat/AI**: `ChatsCircle`, `Sparkle` for AI indicators, `PaperPlaneTilt` for send
 - **Products**: `ShoppingCart`, `Package`, `Barcode` for SKUs
 - **Allergen/Compliance**: `Warning`, `ShieldCheck`, `FirstAid`, `X` for clearance
 - **Food/Recipe**: `ForkKnife`, `CookingPot`, `ListChecks` for ingredients
 - **Planning**: `Calendar` for meal planning, `Plus` for adding meals, `Trash` for removing
-- **Actions**: `Plus`, `Minus`, `TrashSimple`, `ArrowsClockwise` for refresh, `PencilSimple` for editing
-- **Navigation**: `MagnifyingGlass`, `List`, `ClockCounterClockwise` for history
+- **Actions**: `Plus`, `Minus`, `TrashSimple`, `ArrowsClockwise` for refresh, `PencilSimple` for editing, `Check` for completion
+- **Navigation**: `MagnifyingGlass`, `List`, `ClockCounterClockwise` for history, `CaretLeft`/`CaretRight` for carousel
 - **Data**: `ChartLine`, `DownloadSimple`, `FileText` for reports
 
 **Spacing**:

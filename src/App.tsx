@@ -1,7 +1,8 @@
 import { useKV } from '@github/spark/hooks';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChatsCircle, ShoppingCart, ClockCounterClockwise, Calendar } from '@phosphor-icons/react';
+import { House, ChatsCircle, ShoppingCart, ClockCounterClockwise, Calendar } from '@phosphor-icons/react';
+import { HomePage } from '@/components/home/HomePage';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { BrowseProducts } from '@/components/products/BrowseProducts';
 import { OrderHistory } from '@/components/orders/OrderHistory';
@@ -14,7 +15,7 @@ import { Toaster } from '@/components/ui/sonner';
 function App() {
   const [cart, setCart] = useKV<CartItem[]>('cart', []);
   const [messages, setMessages] = useKV<Message[]>('messages', []);
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState('home');
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const addToCart = (item: CartItem) => {
@@ -63,7 +64,11 @@ function App() {
       
       <main className="container mx-auto px-4 md:px-8 lg:px-12 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-6">
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-5 mb-6">
+            <TabsTrigger value="home" className="flex items-center gap-2">
+              <House className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
+            </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <ChatsCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Chat</span>
@@ -81,6 +86,10 @@ function App() {
               <span className="hidden sm:inline">Orders</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="home" className="mt-0">
+            <HomePage onAddToCart={addToCart} />
+          </TabsContent>
 
           <TabsContent value="chat" className="mt-0">
             <ChatInterface 
