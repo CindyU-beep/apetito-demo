@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ShoppingCart, Sparkle, House, Calendar, ClockCounterClockwise, UserCircle } from '@phosphor-icons/react';
+import { ShoppingCart, House, Calendar, ClockCounterClockwise, UserCircle } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ProfileDialog } from './ProfileDialog';
+import apetitoLogo from '@/assets/images/apetito-logo.svg';
 
 type HeaderProps = {
   cartCount: number;
@@ -28,12 +29,10 @@ export function Header({ cartCount, onCartClick, activeTab, onTabChange }: Heade
         <div className="container mx-auto px-4 md:px-8 lg:px-12 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <Sparkle className="w-6 h-6 text-primary-foreground" weight="fill" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold tracking-tight">Apetito AI</h1>
-                <p className="text-xs text-muted-foreground">Institutional Procurement</p>
+              <img src={apetitoLogo} alt="Apetito" className="h-8 w-auto" />
+              <div className="hidden md:block">
+                <h1 className="text-lg font-bold tracking-tight text-foreground">Meal Planner</h1>
+                <p className="text-xs text-muted-foreground">Smart Institutional Ordering</p>
               </div>
             </div>
 

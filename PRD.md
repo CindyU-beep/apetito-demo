@@ -99,28 +99,27 @@ Streamline institutional foodservice procurement through an intelligent, convers
 
 ## Design Direction
 
-The design should evoke trust and efficiency—a professional, clean interface that feels authoritative yet approachable, balancing data density with conversational warmth. This is an enterprise tool that respects institutional buyers' expertise while reducing their cognitive burden. Minimal interface with purposeful information hierarchy serves the mission-critical nature of compliance and ordering accuracy.
+The design should embody Apetito's modern, fresh, and trustworthy brand identity—using their signature green to communicate health, quality, and sustainability while maintaining the efficiency and professionalism institutional buyers expect. The interface should feel clean, contemporary, and approachable, balancing Apetito's warm food service heritage with cutting-edge AI technology. The design must prominently feature Apetito's logo and brand colors throughout, creating immediate brand recognition and trust. Minimal interface with purposeful information hierarchy serves both the welcoming nature of food service and the mission-critical accuracy of compliance and ordering.
 
 ## Color Selection
 
-Complementary (opposite colors) - A professional blue representing trust and efficiency paired with warm accent tones to humanize the AI interactions and highlight compliance states (warnings, confirmations).
+Analogous (Apetito brand colors) - Using Apetito's signature fresh green as the primary brand color (#83bb26) paired with their accent red (#dd052b) for important actions and warnings, creating a clean, modern, and trustworthy institutional food service experience that aligns with Apetito's established brand identity.
 
-- **Primary Color**: Deep Professional Blue `oklch(0.45 0.12 250)` - Communicates reliability, institutional trust, and technological capability without feeling cold
+- **Primary Color**: Apetito Green `oklch(0.70 0.18 130)` (#83bb26) - Communicates freshness, quality food, health, and growth; represents Apetito's commitment to nutritious meals
 - **Secondary Colors**: 
-  - Neutral Gray `oklch(0.95 0.005 250)` for backgrounds - reduces eye strain during long procurement sessions
-  - Soft Blue-Gray `oklch(0.85 0.02 250)` for secondary elements - maintains visual cohesion
-- **Accent Color**: Warm Amber `oklch(0.72 0.14 70)` - Highlights CTAs, AI responses, and positive confirmations with approachable warmth
-- **Destructive/Warning**: Alert Red `oklch(0.60 0.22 25)` - Allergen warnings and critical compliance alerts
-- **Success**: Fresh Green `oklch(0.65 0.18 145)` - Compliance confirmations and successful validations
+  - Neutral Light Gray `oklch(0.96 0.01 260)` for backgrounds - clean, modern feel that keeps focus on content
+  - Soft Gray `oklch(0.90 0.005 260)` for borders and inputs - subtle definition without harshness
+- **Accent Color**: Apetito Red `oklch(0.55 0.22 25)` (#dd052b) - Used for critical actions, allergen warnings, and important notifications; creates visual hierarchy and urgency where needed
+- **Success**: Apetito Green `oklch(0.70 0.18 130)` - Reinforces positive actions with brand color consistency
+- **Destructive/Warning**: Apetito Red `oklch(0.55 0.22 25)` - Allergen warnings and critical compliance alerts using brand red
 
 **Foreground/Background Pairings**:
-- Background (Neutral `oklch(0.98 0.005 250)`): Foreground Dark `oklch(0.25 0.02 250)` - Ratio 12.8:1 ✓
-- Card (White `oklch(1 0 0)`): Card Foreground `oklch(0.25 0.02 250)` - Ratio 13.5:1 ✓
-- Primary (Deep Blue `oklch(0.45 0.12 250)`): White text `oklch(1 0 0)` - Ratio 7.2:1 ✓
-- Secondary (Soft Blue-Gray `oklch(0.85 0.02 250)`): Dark text `oklch(0.25 0.02 250)` - Ratio 9.8:1 ✓
-- Accent (Warm Amber `oklch(0.72 0.14 70)`): Dark text `oklch(0.20 0.02 250)` - Ratio 8.5:1 ✓
-- Destructive (Alert Red `oklch(0.60 0.22 25)`): White text `oklch(1 0 0)` - Ratio 5.1:1 ✓
-- Muted (Light Gray `oklch(0.92 0.005 250)`): Muted Foreground `oklch(0.50 0.02 250)` - Ratio 6.2:1 ✓
+- Background (Clean White `oklch(0.99 0 0)`): Foreground Dark `oklch(0.20 0.01 260)` - Ratio 14.2:1 ✓
+- Card (Pure White `oklch(1 0 0)`): Card Foreground `oklch(0.20 0.01 260)` - Ratio 14.8:1 ✓
+- Primary (Apetito Green `oklch(0.70 0.18 130)`): White text `oklch(1 0 0)` - Ratio 5.8:1 ✓
+- Secondary (Light Gray `oklch(0.96 0.01 260)`): Dark text `oklch(0.20 0.01 260)` - Ratio 13.1:1 ✓
+- Accent (Apetito Red `oklch(0.55 0.22 25)`): White text `oklch(1 0 0)` - Ratio 6.2:1 ✓
+- Muted (Soft Gray `oklch(0.96 0.005 260)`): Muted Foreground `oklch(0.48 0.01 260)` - Ratio 7.4:1 ✓
 
 ## Font Selection
 
@@ -159,6 +158,7 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 ## Component Selection
 
 **Components**:
+- **Logo**: Apetito's official logo prominently displayed in header, using the brand's signature green (#83bb26) and red (#dd052b) colors to establish immediate brand recognition and trust
 - **Carousel**: Hero carousel with auto-play for seasonal promotions, Christmas menus, and featured content with navigation controls
 - **Dialog/Sheet**: For recipe upload modal, allergen detail views, and compliance reports (responsive: Sheet on mobile, Dialog on desktop)
 - **Card**: Primary container for products, recipe matches, recommendation groups, insights cards, and meal displays with hover states
