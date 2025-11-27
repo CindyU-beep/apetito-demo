@@ -169,6 +169,13 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
                   alt={meal.name}
                   className="w-full h-full object-cover"
                 />
+                {hasDiscount(index) && (
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-warning text-warning-foreground text-xs font-semibold">
+                      SAVE €{(getOriginalPrice(meal.price) - meal.price).toFixed(2)}
+                    </Badge>
+                  </div>
+                )}
                 {index < 3 && meal.dietaryTags.length > 0 && (
                   <div className="absolute top-2 left-2">
                     <div className="bg-white rounded-full w-12 h-12 flex items-center justify-center border-4 border-success shadow-md">
@@ -181,13 +188,6 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
               </div>
               
               <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
-                <div className="h-5">
-                  {hasDiscount(index) && (
-                    <Badge className="bg-warning text-warning-foreground text-xs font-semibold">
-                      SAVE €{(getOriginalPrice(meal.price) - meal.price).toFixed(2)}
-                    </Badge>
-                  )}
-                </div>
                 
                 <div className="space-y-1">
                   <div className="flex items-baseline gap-2">
