@@ -158,8 +158,8 @@ export function CartPanel({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
-        <SheetHeader className="px-6 pt-6 pb-4">
+      <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 h-full">
+        <SheetHeader className="px-6 pt-6 pb-4 shrink-0">
           <SheetTitle className="flex items-center gap-3 text-xl">
             <ShoppingCart className="w-6 h-6" />
             Your Cart ({cart.length})
@@ -179,7 +179,7 @@ export function CartPanel({
         ) : (
           <>
             {profileViolations.length > 0 && (
-              <div className="px-6 pb-4">
+              <div className="px-6 pb-4 shrink-0">
                 <Alert className="animate-pulse-warning border-destructive">
                   <Warning className="w-4 h-4 text-destructive" />
                   <AlertDescription className="text-destructive">
@@ -192,17 +192,17 @@ export function CartPanel({
               </div>
             )}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-              <div className="px-6 pb-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+              <div className="px-6 pb-4 shrink-0">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="cart">Cart Items</TabsTrigger>
                   <TabsTrigger value="analysis">Apetito Analysis</TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="cart" className="flex-1 flex flex-col mt-0">
+              <TabsContent value="cart" className="flex-1 flex flex-col mt-0 min-h-0">
                 {allAllergens.size > 0 && (
-                  <div className="px-6 pb-4">
+                  <div className="px-6 pb-4 shrink-0">
                     <Alert>
                       <Warning className="w-4 h-4" />
                       <AlertDescription>
@@ -215,8 +215,8 @@ export function CartPanel({
                   </div>
                 )}
 
-                <ScrollArea className="flex-1 px-6">
-                  <div className="space-y-6 pb-4">
+                <ScrollArea className="flex-1 min-h-0">
+                  <div className="space-y-6 pb-4 px-6">
                     {cart.map((item) => {
                       const price =
                         item.quantity >= (item.product.bulkMinQuantity || 999) &&
@@ -300,9 +300,9 @@ export function CartPanel({
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="analysis" className="flex-1 flex flex-col mt-0">
-                <ScrollArea className="flex-1 px-6">
-                  <div className="space-y-6 pb-4">
+              <TabsContent value="analysis" className="flex-1 flex flex-col mt-0 min-h-0">
+                <ScrollArea className="flex-1 min-h-0">
+                  <div className="space-y-6 pb-4 px-6">
                     <Card className="p-5 bg-gradient-to-br from-primary/5 to-accent/5">
                       <div className="flex items-center gap-3 mb-3">
                         <Sparkle className="w-6 h-6 text-primary" weight="fill" />
@@ -368,7 +368,7 @@ export function CartPanel({
               </TabsContent>
             </Tabs>
 
-            <div className="space-y-6 px-6 py-6 border-t bg-background">
+            <div className="space-y-6 px-6 py-6 border-t bg-background shrink-0">
               {allAllergens.size === 0 && activeTab === 'cart' && (
                 <Alert>
                   <ShieldCheck className="w-4 h-4" />
