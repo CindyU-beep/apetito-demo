@@ -105,27 +105,27 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
 
   return (
     <div className="h-full flex flex-col">
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-3">
         {messages.length === 0 ? (
-          <div className="space-y-6">
-            <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Sparkle className="w-8 h-8 text-primary" weight="fill" />
+          <div className="space-y-4">
+            <div className="text-center py-6">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Sparkle className="w-6 h-6 text-primary" weight="fill" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Welcome to AI Procurement</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                I'm here to help you find products, plan menus, and ensure compliance with dietary requirements.
+              <h3 className="font-semibold text-base mb-2">Welcome to AI Procurement</h3>
+              <p className="text-xs text-muted-foreground">
+                I'm here to help you find products and plan menus.
               </p>
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium">Try asking:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <p className="text-xs font-medium">Try asking:</p>
+              <div className="grid grid-cols-1 gap-2">
                 {CONVERSATION_STARTERS.map((starter, i) => (
                   <Button
                     key={i}
                     variant="outline"
-                    className="justify-start h-auto py-3 px-4 text-left"
+                    className="justify-start h-auto py-2 px-3 text-left text-xs"
                     onClick={() => handleSendMessage(starter)}
                   >
                     {starter}
@@ -135,35 +135,35 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-3 animate-slide-up ${
+                className={`flex gap-2 animate-slide-up ${
                   message.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <Avatar className="w-8 h-8 shrink-0">
+                  <Avatar className="w-7 h-7 shrink-0">
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      <Sparkle weight="fill" />
+                      <Sparkle weight="fill" className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
                 )}
 
                 <div className={`max-w-[85%] ${message.role === 'user' ? 'order-first' : ''}`}>
                   <div
-                    className={`rounded-lg p-3 ${
+                    className={`rounded-lg p-2.5 ${
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground ml-auto'
                         : 'bg-muted text-foreground'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p className="text-xs leading-relaxed">{message.content}</p>
                   </div>
 
                   {message.products && message.products.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                    <div className="grid grid-cols-1 gap-2 mt-2">
                       {message.products.map((product) => (
                         <ProductCard
                           key={product.id}
@@ -179,9 +179,9 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
                 </div>
 
                 {message.role === 'user' && (
-                  <Avatar className="w-8 h-8 shrink-0">
+                  <Avatar className="w-7 h-7 shrink-0">
                     <AvatarFallback className="bg-secondary">
-                      <User />
+                      <User className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -189,17 +189,17 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
             ))}
 
             {isLoading && (
-              <div className="flex gap-3 animate-slide-up">
-                <Avatar className="w-8 h-8 shrink-0">
+              <div className="flex gap-2 animate-slide-up">
+                <Avatar className="w-7 h-7 shrink-0">
                   <AvatarFallback className="bg-primary text-primary-foreground">
-                    <Sparkle weight="fill" />
+                    <Sparkle weight="fill" className="w-4 h-4" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="bg-muted rounded-lg p-3">
+                <div className="bg-muted rounded-lg p-2.5">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-typing-pulse" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-typing-pulse" style={{ animationDelay: '200ms' }} />
-                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-typing-pulse" style={{ animationDelay: '400ms' }} />
+                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-typing-pulse" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-typing-pulse" style={{ animationDelay: '200ms' }} />
+                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-typing-pulse" style={{ animationDelay: '400ms' }} />
                   </div>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
         )}
       </ScrollArea>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-3 border-t border-border">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -219,12 +219,12 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about products, recipes, or allergens..."
-            className="flex-1"
+            placeholder="Ask about products..."
+            className="flex-1 text-sm h-9"
             disabled={isLoading}
           />
-          <Button type="submit" disabled={!input.trim() || isLoading}>
-            <PaperPlaneTilt className="w-5 h-5" />
+          <Button type="submit" disabled={!input.trim() || isLoading} size="sm" className="h-9 w-9 p-0">
+            <PaperPlaneTilt className="w-4 h-4" />
           </Button>
         </form>
       </div>
