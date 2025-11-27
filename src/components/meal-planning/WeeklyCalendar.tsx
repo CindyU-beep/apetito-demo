@@ -1,12 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MealPlan, PlannedMeal } from '@/lib/types';
+import { MealPlan, PlannedMeal, OrganizationProfile, AllergenType } from '@/lib/types';
 import { format } from 'date-fns';
 import { Plus, Minus, PencilSimple, CaretRight, TrendUp, Warning, CheckCircle, Sparkle } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useKV } from '@github/spark/hooks';
 
 type WeeklyCalendarProps = {
   plan: MealPlan;
@@ -40,6 +41,7 @@ export function WeeklyCalendar({
   onEditMeal,
   onRemoveMeal,
 }: WeeklyCalendarProps) {
+  const [profile] = useKV<OrganizationProfile | null>('organization-profile', null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [nutritionalBalance, setNutritionalBalance] = useState<NutritionalBalance | null>(null);
@@ -115,6 +117,57 @@ export function WeeklyCalendar({
       setNutritionalBalance(balance);
 
       const newSuggestions: AISuggestion[] = [];
+
+      if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+        const violatingMeals: { meal: string; allergens: AllergenType[]; day: string }[] = [];
+        
+        plan.days.forEach(day => {
+          day.meals.forEach(plannedMeal => {
+            const mealAllergens = plannedMeal.meal.allergens.filter(allergen =>
+              profile.preferences.allergenExclusions.includes(allergen)
+            );
+            if (mealAllergens.length > 0) {
+              violatingMeals.push({
+                meal: plannedMeal.meal.name,
+                allergens: mealAllergens,
+                day: format(new Date(day.date), 'EEEE'),
+              });
+            }
+          });
+        });
+
+        if (violatingMeals.length > 0) {
+          const promptText = `You are a dietary compliance AI for ${profile.name}, a ${profile.type}. 
+          
+The organization has excluded these allergens: ${profile.preferences.allergenExclusions.join(', ')}
+
+However, their current meal plan includes these violations:
+${violatingMeals.map(v => `- ${v.meal} (${v.day}) contains: ${v.allergens.join(', ')}`).join('\n')}
+
+Generate a brief, urgent warning message (2-3 sentences) that:
+1. States this is a critical compliance issue for their ${profile.type}
+2. Lists the specific violations
+3. Strongly recommends removing these meals immediately
+
+Keep it professional but emphasize the safety risk.`;
+
+          try {
+            const aiWarning = await window.spark.llm(promptText, 'gpt-4o-mini', false);
+            
+            newSuggestions.push({
+              type: 'warning',
+              title: '🚨 CRITICAL: Allergen Violations Detected',
+              description: aiWarning,
+            });
+          } catch (error) {
+            newSuggestions.push({
+              type: 'warning',
+              title: '🚨 CRITICAL: Allergen Violations Detected',
+              description: `Your meal plan contains ${violatingMeals.length} meal(s) with restricted allergens (${[...new Set(violatingMeals.flatMap(v => v.allergens))].join(', ')}). This violates ${profile.name}'s dietary requirements. Remove these meals immediately.`,
+            });
+          }
+        }
+      }
 
       if (balance.avgCalories < 1500) {
         newSuggestions.push({
@@ -225,38 +278,52 @@ export function WeeklyCalendar({
                         </div>
                       ) : (
                         <>
-                          {day.meals.map((plannedMeal) => (
-                            <div
-                              key={plannedMeal.id}
-                              className="px-3 py-3 border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer group"
-                              onClick={() => onEditMeal(plannedMeal, day.date)}
-                            >
-                              <div className="space-y-1.5">
-                                <div className="flex items-start justify-between gap-2">
-                                  <h4 className="font-semibold text-xs leading-tight line-clamp-2">
-                                    {plannedMeal.meal.name}
-                                  </h4>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onRemoveMeal(plannedMeal.id, day.date);
-                                    }}
-                                  >
-                                    <Minus className="w-3 h-3 text-destructive" />
-                                  </Button>
+                          {day.meals.map((plannedMeal) => {
+                            const hasRestrictedAllergens = profile?.preferences.allergenExclusions?.some(
+                              allergen => plannedMeal.meal.allergens.includes(allergen)
+                            );
+                            
+                            return (
+                              <div
+                                key={plannedMeal.id}
+                                className={cn(
+                                  "px-3 py-3 border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer group",
+                                  hasRestrictedAllergens && "bg-destructive/10 border-l-4 border-l-destructive"
+                                )}
+                                onClick={() => onEditMeal(plannedMeal, day.date)}
+                              >
+                                <div className="space-y-1.5">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                                      {hasRestrictedAllergens && (
+                                        <Warning className="w-4 h-4 text-destructive shrink-0 mt-0.5" weight="fill" />
+                                      )}
+                                      <h4 className="font-semibold text-xs leading-tight line-clamp-2">
+                                        {plannedMeal.meal.name}
+                                      </h4>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onRemoveMeal(plannedMeal.id, day.date);
+                                      }}
+                                    >
+                                      <Minus className="w-3 h-3 text-destructive" />
+                                    </Button>
+                                  </div>
+                                  
+                                  {plannedMeal.meal.components.slice(0, 3).map((component, idx) => (
+                                    <p key={idx} className="text-xs text-muted-foreground leading-snug line-clamp-2">
+                                      {component}
+                                    </p>
+                                  ))}
                                 </div>
-                                
-                                {plannedMeal.meal.components.slice(0, 3).map((component, idx) => (
-                                  <p key={idx} className="text-xs text-muted-foreground leading-snug line-clamp-2">
-                                    {component}
-                                  </p>
-                                ))}
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                           <div
                             className="h-24 flex flex-col items-center justify-center cursor-pointer hover:bg-accent/30 transition-colors border-b border-border/50"
                             onClick={() => onAddMeal(day.date)}
