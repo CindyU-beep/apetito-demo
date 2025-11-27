@@ -1,10 +1,12 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MealPlan, PlannedMeal } from '@/lib/types';
 import { format } from 'date-fns';
-import { Plus, Minus, PencilSimple, CaretRight } from '@phosphor-icons/react';
+import { Plus, Minus, PencilSimple, CaretRight, TrendUp, Warning, CheckCircle, Sparkle } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 type WeeklyCalendarProps = {
   plan: MealPlan;
@@ -13,12 +15,35 @@ type WeeklyCalendarProps = {
   onRemoveMeal: (mealId: string, date: string) => void;
 };
 
+type AISuggestion = {
+  type: 'warning' | 'success' | 'info';
+  title: string;
+  description: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+};
+
+type NutritionalBalance = {
+  avgCalories: number;
+  avgProtein: number;
+  avgCarbs: number;
+  avgFat: number;
+  variety: number;
+  costPerDay: number;
+};
+
 export function WeeklyCalendar({
   plan,
   onAddMeal,
   onEditMeal,
   onRemoveMeal,
 }: WeeklyCalendarProps) {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
+  const [nutritionalBalance, setNutritionalBalance] = useState<NutritionalBalance | null>(null);
+
   const calculateDayTotal = (meals: PlannedMeal[]) => {
     return meals.reduce(
       (sum, m) => sum + m.meal.price * m.servings,
@@ -36,121 +61,339 @@ export function WeeklyCalendar({
     return format(date, 'dd.MM');
   };
 
+  const analyzeMealPlan = async () => {
+    setIsAnalyzing(true);
+    
+    try {
+      const totalDays = plan.days.filter(day => day.meals.length > 0).length;
+      
+      if (totalDays === 0) {
+        toast.info('Add some meals first to get AI insights');
+        setIsAnalyzing(false);
+        return;
+      }
+
+      const totals = plan.days.reduce(
+        (acc, day) => {
+          const dayTotals = day.meals.reduce(
+            (dayAcc, meal) => ({
+              calories: dayAcc.calories + meal.meal.nutritionalInfo.calories * meal.servings,
+              protein: dayAcc.protein + meal.meal.nutritionalInfo.protein * meal.servings,
+              carbs: dayAcc.carbs + meal.meal.nutritionalInfo.carbs * meal.servings,
+              fat: dayAcc.fat + meal.meal.nutritionalInfo.fat * meal.servings,
+              cost: dayAcc.cost + meal.meal.price * meal.servings,
+            }),
+            { calories: 0, protein: 0, carbs: 0, fat: 0, cost: 0 }
+          );
+          
+          if (day.meals.length > 0) {
+            acc.calories += dayTotals.calories;
+            acc.protein += dayTotals.protein;
+            acc.carbs += dayTotals.carbs;
+            acc.fat += dayTotals.fat;
+            acc.cost += dayTotals.cost;
+          }
+          
+          return acc;
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0, cost: 0 }
+      );
+
+      const uniqueMeals = new Set(
+        plan.days.flatMap(day => day.meals.map(m => m.meal.id))
+      ).size;
+
+      const balance: NutritionalBalance = {
+        avgCalories: totals.calories / totalDays,
+        avgProtein: totals.protein / totalDays,
+        avgCarbs: totals.carbs / totalDays,
+        avgFat: totals.fat / totalDays,
+        variety: uniqueMeals,
+        costPerDay: totals.cost / totalDays,
+      };
+
+      setNutritionalBalance(balance);
+
+      const newSuggestions: AISuggestion[] = [];
+
+      if (balance.avgCalories < 1500) {
+        newSuggestions.push({
+          type: 'warning',
+          title: 'Low Daily Calories',
+          description: `Average ${Math.round(balance.avgCalories)} kcal/day. Consider adding more substantial meals.`,
+        });
+      }
+
+      if (balance.avgCalories > 2500) {
+        newSuggestions.push({
+          type: 'warning',
+          title: 'High Daily Calories',
+          description: `Average ${Math.round(balance.avgCalories)} kcal/day. Consider lighter options.`,
+        });
+      }
+
+      if (balance.avgProtein < 50) {
+        newSuggestions.push({
+          type: 'warning',
+          title: 'Low Protein Intake',
+          description: `Average ${Math.round(balance.avgProtein)}g/day. Add protein-rich meals.`,
+        });
+      }
+
+      if (uniqueMeals < 4 && totalDays >= 5) {
+        newSuggestions.push({
+          type: 'info',
+          title: 'Limited Variety',
+          description: `Only ${uniqueMeals} unique meals. Mix it up for better nutrition!`,
+        });
+      }
+
+      if (balance.costPerDay > 15) {
+        newSuggestions.push({
+          type: 'info',
+          title: 'Budget Optimization',
+          description: `€${balance.costPerDay.toFixed(2)}/day. Save with budget-friendly alternatives.`,
+        });
+      }
+
+      if (newSuggestions.length === 0) {
+        newSuggestions.push({
+          type: 'success',
+          title: 'Well-Balanced Plan!',
+          description: 'Your meal plan looks nutritionally balanced and varied.',
+        });
+      }
+
+      setSuggestions(newSuggestions);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
-    <Card className="border-4 border-success rounded-2xl overflow-hidden">
-      <div className="bg-background">
-        <div className="flex items-center gap-4 px-6 py-4 border-b-2 border-success/30">
-          <h3 className="font-semibold text-sm text-muted-foreground">
-            {plan.name}
-          </h3>
-          <div className="ml-auto text-sm text-muted-foreground">
-            ✚ Price: {plan.days.reduce((sum, day) => sum + calculateDayTotal(day.meals), 0).toFixed(2)} €
-          </div>
-        </div>
-
-        <ScrollArea className="w-full">
-          <div className="flex">
-            {plan.days.map((day, dayIndex) => {
-              const dayTotal = calculateDayTotal(day.meals);
-              const isLastDay = dayIndex === plan.days.length - 1;
-
-              return (
-                <div
-                  key={day.date}
-                  className={cn(
-                    'flex-1 min-w-[180px] border-r-2 border-success/30',
-                    isLastDay && 'border-r-0'
-                  )}
-                >
-                  <div className="border-b-2 border-success/30 px-3 py-2 bg-muted/30">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-base">{getShortDayName(day.date)}</span>
-                        <span className="text-xs text-muted-foreground">{getFormattedDate(day.date)}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => onAddMeal(day.date)}
-                      >
-                        <PencilSimple className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0 min-h-[400px]">
-                    {day.meals.length === 0 ? (
-                      <div
-                        className="h-32 flex flex-col items-center justify-center cursor-pointer hover:bg-accent/30 transition-colors border-b border-border/50"
-                        onClick={() => onAddMeal(day.date)}
-                      >
-                        <Plus className="w-8 h-8 text-muted-foreground mb-2" />
-                        <span className="text-xs text-muted-foreground">Add meal</span>
-                      </div>
-                    ) : (
-                      <>
-                        {day.meals.map((plannedMeal) => (
-                          <div
-                            key={plannedMeal.id}
-                            className="px-3 py-3 border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer group"
-                            onClick={() => onEditMeal(plannedMeal, day.date)}
-                          >
-                            <div className="space-y-1.5">
-                              <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-semibold text-xs leading-tight line-clamp-2">
-                                  {plannedMeal.meal.name}
-                                </h4>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onRemoveMeal(plannedMeal.id, day.date);
-                                  }}
-                                >
-                                  <Minus className="w-3 h-3 text-destructive" />
-                                </Button>
-                              </div>
-                              
-                              {plannedMeal.meal.components.slice(0, 3).map((component, idx) => (
-                                <p key={idx} className="text-xs text-muted-foreground leading-snug line-clamp-2">
-                                  {component}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                        <div
-                          className="h-24 flex flex-col items-center justify-center cursor-pointer hover:bg-accent/30 transition-colors border-b border-border/50"
-                          onClick={() => onAddMeal(day.date)}
-                        >
-                          <Plus className="w-6 h-6 text-muted-foreground mb-1" />
-                          <span className="text-xs text-muted-foreground">Add meal</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="border-t-2 border-success/30 px-3 py-2 bg-muted/20">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold">TG</span>
-                      <span className="font-bold">{dayTotal.toFixed(2)} €</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            <div className="flex items-center justify-center px-4 bg-muted/10">
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
-                <CaretRight className="w-5 h-5 text-success" weight="bold" />
-              </Button>
+    <div className="space-y-6">
+      <Card className="border-4 border-success rounded-2xl overflow-hidden">
+        <div className="bg-background">
+          <div className="flex items-center gap-4 px-6 py-4 border-b-2 border-success/30">
+            <h3 className="font-semibold text-sm text-muted-foreground">
+              {plan.name}
+            </h3>
+            <div className="ml-auto text-sm text-muted-foreground">
+              ✚ Price: {plan.days.reduce((sum, day) => sum + calculateDayTotal(day.meals), 0).toFixed(2)} €
             </div>
           </div>
-        </ScrollArea>
-      </div>
-    </Card>
+
+          <ScrollArea className="w-full">
+            <div className="flex">
+              {plan.days.map((day, dayIndex) => {
+                const dayTotal = calculateDayTotal(day.meals);
+                const isLastDay = dayIndex === plan.days.length - 1;
+
+                return (
+                  <div
+                    key={day.date}
+                    className={cn(
+                      'flex-1 min-w-[180px] border-r-2 border-success/30',
+                      isLastDay && 'border-r-0'
+                    )}
+                  >
+                    <div className="border-b-2 border-success/30 px-3 py-2 bg-muted/30">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-base">{getShortDayName(day.date)}</span>
+                          <span className="text-xs text-muted-foreground">{getFormattedDate(day.date)}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => onAddMeal(day.date)}
+                        >
+                          <PencilSimple className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-0 min-h-[400px]">
+                      {day.meals.length === 0 ? (
+                        <div
+                          className="h-32 flex flex-col items-center justify-center cursor-pointer hover:bg-accent/30 transition-colors border-b border-border/50"
+                          onClick={() => onAddMeal(day.date)}
+                        >
+                          <Plus className="w-8 h-8 text-muted-foreground mb-2" />
+                          <span className="text-xs text-muted-foreground">Add meal</span>
+                        </div>
+                      ) : (
+                        <>
+                          {day.meals.map((plannedMeal) => (
+                            <div
+                              key={plannedMeal.id}
+                              className="px-3 py-3 border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer group"
+                              onClick={() => onEditMeal(plannedMeal, day.date)}
+                            >
+                              <div className="space-y-1.5">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h4 className="font-semibold text-xs leading-tight line-clamp-2">
+                                    {plannedMeal.meal.name}
+                                  </h4>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onRemoveMeal(plannedMeal.id, day.date);
+                                    }}
+                                  >
+                                    <Minus className="w-3 h-3 text-destructive" />
+                                  </Button>
+                                </div>
+                                
+                                {plannedMeal.meal.components.slice(0, 3).map((component, idx) => (
+                                  <p key={idx} className="text-xs text-muted-foreground leading-snug line-clamp-2">
+                                    {component}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          <div
+                            className="h-24 flex flex-col items-center justify-center cursor-pointer hover:bg-accent/30 transition-colors border-b border-border/50"
+                            onClick={() => onAddMeal(day.date)}
+                          >
+                            <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+                            <span className="text-xs text-muted-foreground">Add meal</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="border-t-2 border-success/30 px-3 py-2 bg-muted/20">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold">TG</span>
+                        <span className="font-bold">{dayTotal.toFixed(2)} €</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="flex items-center justify-center px-4 bg-muted/10">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
+                  <CaretRight className="w-5 h-5 text-success" weight="bold" />
+                </Button>
+              </div>
+            </div>
+          </ScrollArea>
+        </div>
+      </Card>
+
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkle className="w-5 h-5 text-primary" weight="fill" />
+            Nutritional Analysis
+          </CardTitle>
+          <CardDescription>
+            Analyze your weekly meal plan for nutritional balance and optimization
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            variant="outline"
+            onClick={analyzeMealPlan}
+            disabled={isAnalyzing}
+            className="w-full"
+            size="lg"
+          >
+            {isAnalyzing ? (
+              <>
+                <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <TrendUp className="w-4 h-4 mr-2" />
+                Analyze Current Plan
+              </>
+            )}
+          </Button>
+
+          {nutritionalBalance && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCalories)}</div>
+                  <div className="text-xs text-muted-foreground">kcal/day</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgProtein)}g</div>
+                  <div className="text-xs text-muted-foreground">protein/day</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="text-xl font-bold">{nutritionalBalance.variety}</div>
+                  <div className="text-xs text-muted-foreground">unique meals</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCarbs)}g</div>
+                  <div className="text-xs text-muted-foreground">carbs/day</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgFat)}g</div>
+                  <div className="text-xs text-muted-foreground">fat/day</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="text-xl font-bold">€{nutritionalBalance.costPerDay.toFixed(2)}</div>
+                  <div className="text-xs text-muted-foreground">cost/day</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {suggestions.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <TrendUp className="w-4 h-4 text-primary" />
+                Insights & Recommendations
+              </h4>
+              <div className="space-y-2">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg border-2 ${
+                      suggestion.type === 'warning'
+                        ? 'bg-warning/10 border-warning/30'
+                        : suggestion.type === 'success'
+                        ? 'bg-success/10 border-success/30'
+                        : 'bg-primary/10 border-primary/30'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="mt-0.5">
+                        {suggestion.type === 'warning' && (
+                          <Warning className="w-5 h-5 text-warning" weight="fill" />
+                        )}
+                        {suggestion.type === 'success' && (
+                          <CheckCircle className="w-5 h-5 text-success" weight="fill" />
+                        )}
+                        {suggestion.type === 'info' && (
+                          <Sparkle className="w-5 h-5 text-primary" weight="fill" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-semibold text-sm mb-1">{suggestion.title}</h5>
+                        <p className="text-xs text-muted-foreground">
+                          {suggestion.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
