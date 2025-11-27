@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkle, ArrowsClockwise, TrendUp, Snowflake, Package, ChartLine } from '@phosphor-icons/react';
+import { Sparkle, ArrowsClockwise, TrendUp } from '@phosphor-icons/react';
 import { HeroCarousel } from './HeroCarousel';
 import { QuickReorder } from './QuickReorder';
 import { PredictiveOrdering } from './PredictiveOrdering';
-import { SeasonalMenu } from './SeasonalMenu';
 import { TrendingMeals } from './TrendingMeals';
 import { ChristmasMenu } from './ChristmasMenu';
 import { AIInsights } from './AIInsights';
@@ -50,7 +49,7 @@ export function HomePage({ onAddToCart }: HomePageProps) {
         </div>
 
         <Tabs value={activeInsight} onValueChange={setActiveInsight} className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-2">
             <TabsTrigger value="predictive" className="flex items-center gap-2">
               <TrendUp className="w-4 h-4" />
               <span className="hidden sm:inline">Predictive</span>
@@ -58,10 +57,6 @@ export function HomePage({ onAddToCart }: HomePageProps) {
             <TabsTrigger value="reorder" className="flex items-center gap-2">
               <ArrowsClockwise className="w-4 h-4" />
               <span className="hidden sm:inline">Quick Reorder</span>
-            </TabsTrigger>
-            <TabsTrigger value="seasonal" className="flex items-center gap-2">
-              <Snowflake className="w-4 h-4" />
-              <span className="hidden sm:inline">Seasonal</span>
             </TabsTrigger>
           </TabsList>
 
@@ -77,10 +72,6 @@ export function HomePage({ onAddToCart }: HomePageProps) {
               orderHistory={orderHistory || []} 
               onAddToCart={onAddToCart}
             />
-          </TabsContent>
-
-          <TabsContent value="seasonal" className="mt-6">
-            <SeasonalMenu onAddToCart={onAddToCart} />
           </TabsContent>
         </Tabs>
       </section>
