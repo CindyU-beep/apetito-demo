@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkle, TrendUp, Warning, CheckCircle, Lightning } from '@phosphor-icons/react';
+import { Sparkle, TrendUp, Warning, CheckCircle, Lightning, MagicWand, Brain, ChartBar, Users } from '@phosphor-icons/react';
 import { MealPlan, PlannedMeal, Meal } from '@/lib/types';
 import { MOCK_MEALS } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type MealPlanningAIProps = {
   plan: MealPlan;
@@ -35,8 +39,13 @@ type NutritionalBalance = {
 export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isProcessingCustom, setIsProcessingCustom] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [nutritionalBalance, setNutritionalBalance] = useState<NutritionalBalance | null>(null);
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [peopleCount, setPeopleCount] = useState('50');
+  const [dietaryRestrictions, setDietaryRestrictions] = useState('');
+  const [budgetPerMeal, setBudgetPerMeal] = useState('');
 
   const analyzeMealPlan = async () => {
     setIsAnalyzing(true);
@@ -178,28 +187,34 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
         calories: m.nutritionalInfo.calories,
         protein: m.nutritionalInfo.protein,
         price: m.price,
-        dietaryTags: m.dietaryTags
+        dietaryTags: m.dietaryTags,
+        allergens: m.allergens
       })));
       
-      const promptText = `You are a professional nutritionist. Generate a balanced weekly meal plan.
+      const restrictions = dietaryRestrictions.trim() ? `\n- Dietary restrictions: ${dietaryRestrictions}` : '';
+      const budget = budgetPerMeal.trim() ? `\n- Budget limit: €${budgetPerMeal} per meal` : '';
+      const people = peopleCount.trim() ? `\n- Planning for: ${peopleCount} people` : '';
+      
+      const promptText = `You are a professional nutritionist for institutional catering. Generate a balanced weekly meal plan.
 
 Available meals (JSON format):
 ${mealsData}
 
-Create a 7-day meal plan with:
+Requirements:
 - 2000-2200 calories per day average
 - Good protein distribution (60-80g/day)
 - Variety of categories (mix mains, vegetarian, sides)
 - Budget conscious (prefer meals under €5)
-- Maximum variety (avoid repeating meals too often)
+- Maximum variety (avoid repeating meals too often)${restrictions}${budget}${people}
 
-Return ONLY a JSON object with this structure:
+Return ONLY a JSON object with this exact structure:
 {
   "days": [
     {
       "date": "day_index_0_to_6",
       "mealIds": ["meal_id_1", "meal_id_2"],
-      "servings": [2, 1]
+      "servings": [2, 1],
+      "reasoning": "Brief explanation why these meals work together"
     }
   ]
 }`;
@@ -221,6 +236,7 @@ Return ONLY a JSON object with this structure:
               meal,
               mealType: 'lunch' as const,
               servings: aiDay.servings[idx] || 1,
+              notes: aiDay.reasoning,
             };
           })
           .filter(Boolean) as PlannedMeal[];
@@ -229,12 +245,102 @@ Return ONLY a JSON object with this structure:
       });
 
       onApplySuggestions(daySuggestions);
-      toast.success('AI-generated meal plan applied!');
+      toast.success('AI-generated meal plan applied! Check the Calendar tab to see your meals.');
     } catch (error) {
       console.error('Error generating meal plan:', error);
       toast.error('Failed to generate meal plan. Try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleCustomRequest = async () => {
+    if (!customPrompt.trim()) {
+      toast.error('Please describe what you want');
+      return;
+    }
+
+    setIsProcessingCustom(true);
+    
+    try {
+      const mealsData = JSON.stringify(MOCK_MEALS.map(m => ({ 
+        id: m.id, 
+        name: m.name, 
+        category: m.category,
+        calories: m.nutritionalInfo.calories,
+        protein: m.nutritionalInfo.protein,
+        carbs: m.nutritionalInfo.carbs,
+        fat: m.nutritionalInfo.fat,
+        price: m.price,
+        dietaryTags: m.dietaryTags,
+        allergens: m.allergens,
+        components: m.components
+      })));
+
+      const currentPlanSummary = plan.days.map((day, idx) => ({
+        dayIndex: idx,
+        meals: day.meals.map(m => m.meal.name),
+        totalCalories: day.meals.reduce((sum, m) => sum + m.meal.nutritionalInfo.calories * m.servings, 0)
+      }));
+      
+      const promptText = `You are a professional nutritionist and meal planning assistant.
+
+Current meal plan:
+${JSON.stringify(currentPlanSummary)}
+
+Available meals:
+${mealsData}
+
+User request: ${customPrompt}
+
+Based on the user's request, generate appropriate meal suggestions. Return ONLY a JSON object with this structure:
+{
+  "days": [
+    {
+      "date": "day_index_0_to_6",
+      "mealIds": ["meal_id_1", "meal_id_2"],
+      "servings": [2, 1],
+      "reasoning": "Brief explanation why these meals address the user's request"
+    }
+  ],
+  "summary": "Brief summary of changes made to address the request"
+}
+
+If the request is about specific days, only modify those days. If it's about the whole week, modify all days.`;
+
+      const response = await window.spark.llm(promptText, 'gpt-4o', true);
+      const aiResponse = JSON.parse(response);
+
+      const daySuggestions = plan.days.map((day, index) => {
+        const aiDay = aiResponse.days.find((d: { date: string }) => d.date === `day_index_${index}`);
+        if (!aiDay) return { date: day.date, meals: day.meals };
+
+        const meals: PlannedMeal[] = aiDay.mealIds
+          .map((mealId: string, idx: number) => {
+            const meal = MOCK_MEALS.find(m => m.id === mealId);
+            if (!meal) return null;
+
+            return {
+              id: `planned-${Date.now()}-${idx}`,
+              meal,
+              mealType: 'lunch' as const,
+              servings: aiDay.servings[idx] || 1,
+              notes: aiDay.reasoning,
+            };
+          })
+          .filter(Boolean) as PlannedMeal[];
+
+        return { date: day.date, meals };
+      });
+
+      onApplySuggestions(daySuggestions);
+      toast.success(aiResponse.summary || 'Custom meal plan applied!');
+      setCustomPrompt('');
+    } catch (error) {
+      console.error('Error processing custom request:', error);
+      toast.error('Failed to process your request. Try rephrasing.');
+    } finally {
+      setIsProcessingCustom(false);
     }
   };
 
@@ -290,86 +396,191 @@ Return ONLY a JSON object with this structure:
             AI Meal Planning Assistant
           </CardTitle>
           <CardDescription>
-            Get intelligent suggestions to optimize your meal plan
+            Get intelligent suggestions to optimize your meal plan for nutrition, variety, and budget
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Button
-              onClick={autoFillWeek}
-              disabled={isGenerating}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Lightning className="w-4 h-4 mr-2" weight="fill" />
-                  Auto-Fill Week
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={analyzeMealPlan}
-              disabled={isAnalyzing}
-              className="w-full"
-            >
-              {isAnalyzing ? (
-                <>
-                  <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <TrendUp className="w-4 h-4 mr-2" />
-                  Analyze Plan
-                </>
-              )}
-            </Button>
-          </div>
+        <CardContent>
+          <Tabs defaultValue="generate" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="generate" className="flex items-center gap-2">
+                <Lightning className="w-4 h-4" weight="fill" />
+                <span className="hidden sm:inline">Generate</span>
+              </TabsTrigger>
+              <TabsTrigger value="custom" className="flex items-center gap-2">
+                <Brain className="w-4 h-4" />
+                <span className="hidden sm:inline">Custom</span>
+              </TabsTrigger>
+              <TabsTrigger value="analyze" className="flex items-center gap-2">
+                <ChartBar className="w-4 h-4" />
+                <span className="hidden sm:inline">Analyze</span>
+              </TabsTrigger>
+            </TabsList>
 
-          {nutritionalBalance && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-4 border-t">
-              <div className="text-center p-3 bg-background rounded-lg">
-                <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCalories)}</div>
-                <div className="text-xs text-muted-foreground">kcal/day</div>
+            <TabsContent value="generate" className="space-y-4 mt-4">
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="people-count">Number of People</Label>
+                  <Input
+                    id="people-count"
+                    type="number"
+                    placeholder="50"
+                    value={peopleCount}
+                    onChange={(e) => setPeopleCount(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="dietary-restrictions">Dietary Restrictions (optional)</Label>
+                  <Input
+                    id="dietary-restrictions"
+                    placeholder="e.g., vegetarian, gluten-free, nut-free"
+                    value={dietaryRestrictions}
+                    onChange={(e) => setDietaryRestrictions(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="budget">Budget per Meal (optional)</Label>
+                  <Input
+                    id="budget"
+                    type="number"
+                    placeholder="e.g., 5.00"
+                    value={budgetPerMeal}
+                    onChange={(e) => setBudgetPerMeal(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="text-center p-3 bg-background rounded-lg">
-                <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgProtein)}g</div>
-                <div className="text-xs text-muted-foreground">protein/day</div>
+
+              <Button
+                onClick={autoFillWeek}
+                disabled={isGenerating}
+                className="w-full"
+                size="lg"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                    Generating AI Plan...
+                  </>
+                ) : (
+                  <>
+                    <Lightning className="w-4 h-4 mr-2" weight="fill" />
+                    Auto-Fill Entire Week
+                  </>
+                )}
+              </Button>
+
+              <div className="text-xs text-muted-foreground text-center pt-2">
+                AI will create a balanced meal plan considering all your requirements
               </div>
-              <div className="text-center p-3 bg-background rounded-lg">
-                <div className="text-xl font-bold">{nutritionalBalance.variety}</div>
-                <div className="text-xs text-muted-foreground">unique meals</div>
+            </TabsContent>
+
+            <TabsContent value="custom" className="space-y-4 mt-4">
+              <div className="space-y-3">
+                <Label htmlFor="custom-prompt">What would you like to change?</Label>
+                <Textarea
+                  id="custom-prompt"
+                  placeholder="Examples:&#10;- Make Monday and Tuesday lighter&#10;- Add more protein-rich meals&#10;- Include more vegetarian options&#10;- Swap out meals with nuts&#10;- Make Friday special with higher-end meals"
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  rows={5}
+                  className="resize-none"
+                />
               </div>
-              <div className="text-center p-3 bg-background rounded-lg">
-                <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCarbs)}g</div>
-                <div className="text-xs text-muted-foreground">carbs/day</div>
+
+              <Button
+                onClick={handleCustomRequest}
+                disabled={isProcessingCustom || !customPrompt.trim()}
+                className="w-full"
+                size="lg"
+              >
+                {isProcessingCustom ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <MagicWand className="w-4 h-4 mr-2" />
+                    Apply Custom Changes
+                  </>
+                )}
+              </Button>
+
+              <div className="text-xs text-muted-foreground text-center pt-2">
+                Describe any changes you want and AI will adjust your meal plan
               </div>
-              <div className="text-center p-3 bg-background rounded-lg">
-                <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgFat)}g</div>
-                <div className="text-xs text-muted-foreground">fat/day</div>
-              </div>
-              <div className="text-center p-3 bg-background rounded-lg">
-                <div className="text-xl font-bold">€{nutritionalBalance.costPerDay.toFixed(2)}</div>
-                <div className="text-xs text-muted-foreground">cost/day</div>
-              </div>
-            </div>
-          )}
+            </TabsContent>
+
+            <TabsContent value="analyze" className="space-y-4 mt-4">
+              <Button
+                variant="outline"
+                onClick={analyzeMealPlan}
+                disabled={isAnalyzing}
+                className="w-full"
+                size="lg"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <TrendUp className="w-4 h-4 mr-2" />
+                    Analyze Current Plan
+                  </>
+                )}
+              </Button>
+
+              {nutritionalBalance && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="text-center p-3 bg-background rounded-lg border">
+                      <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCalories)}</div>
+                      <div className="text-xs text-muted-foreground">kcal/day</div>
+                    </div>
+                    <div className="text-center p-3 bg-background rounded-lg border">
+                      <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgProtein)}g</div>
+                      <div className="text-xs text-muted-foreground">protein/day</div>
+                    </div>
+                    <div className="text-center p-3 bg-background rounded-lg border">
+                      <div className="text-xl font-bold">{nutritionalBalance.variety}</div>
+                      <div className="text-xs text-muted-foreground">unique meals</div>
+                    </div>
+                    <div className="text-center p-3 bg-background rounded-lg border">
+                      <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgCarbs)}g</div>
+                      <div className="text-xs text-muted-foreground">carbs/day</div>
+                    </div>
+                    <div className="text-center p-3 bg-background rounded-lg border">
+                      <div className="text-xl font-bold">{Math.round(nutritionalBalance.avgFat)}g</div>
+                      <div className="text-xs text-muted-foreground">fat/day</div>
+                    </div>
+                    <div className="text-center p-3 bg-background rounded-lg border">
+                      <div className="text-xl font-bold">€{nutritionalBalance.costPerDay.toFixed(2)}</div>
+                      <div className="text-xs text-muted-foreground">cost/day</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
       {suggestions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">AI Insights</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />
+              AI Insights & Recommendations
+            </CardTitle>
+            <CardDescription>
+              Smart suggestions to improve your meal plan
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[300px] pr-4">
+            <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-3">
                 {suggestions.map((suggestion, index) => (
                   <div
