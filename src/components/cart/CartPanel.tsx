@@ -158,19 +158,19 @@ export function CartPanel({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5" />
+      <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
+        <SheetHeader className="px-6 pt-6 pb-4">
+          <SheetTitle className="flex items-center gap-3 text-xl">
+            <ShoppingCart className="w-6 h-6" />
             Your Cart ({cart.length})
           </SheetTitle>
         </SheetHeader>
 
         {cart.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center py-12">
-              <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Your cart is empty</h3>
+          <div className="flex-1 flex items-center justify-center px-6">
+            <div className="text-center py-16">
+              <ShoppingCart className="w-20 h-20 text-muted-foreground mx-auto mb-6" />
+              <h3 className="font-semibold text-lg mb-3">Your cart is empty</h3>
               <p className="text-sm text-muted-foreground">
                 Start adding products to get started
               </p>
@@ -179,38 +179,44 @@ export function CartPanel({
         ) : (
           <>
             {profileViolations.length > 0 && (
-              <Alert className="animate-pulse-warning border-destructive">
-                <Warning className="w-4 h-4 text-destructive" />
-                <AlertDescription className="text-destructive">
-                  <strong>Profile Alert:</strong> Cart contains allergens excluded in your organization profile:{' '}
-                  {Array.from(new Set(profileViolations))
-                    .map((a) => ALLERGEN_LABELS[a].label)
-                    .join(', ')}
-                </AlertDescription>
-              </Alert>
+              <div className="px-6 pb-4">
+                <Alert className="animate-pulse-warning border-destructive">
+                  <Warning className="w-4 h-4 text-destructive" />
+                  <AlertDescription className="text-destructive">
+                    <strong>Profile Alert:</strong> Cart contains allergens excluded in your organization profile:{' '}
+                    {Array.from(new Set(profileViolations))
+                      .map((a) => ALLERGEN_LABELS[a].label)
+                      .join(', ')}
+                  </AlertDescription>
+                </Alert>
+              </div>
             )}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="cart">Cart Items</TabsTrigger>
-                <TabsTrigger value="analysis">Apetito Analysis</TabsTrigger>
-              </TabsList>
+              <div className="px-6 pb-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="cart">Cart Items</TabsTrigger>
+                  <TabsTrigger value="analysis">Apetito Analysis</TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="cart" className="flex-1 flex flex-col mt-4">
+              <TabsContent value="cart" className="flex-1 flex flex-col mt-0">
                 {allAllergens.size > 0 && (
-                  <Alert className="mb-4">
-                    <Warning className="w-4 h-4" />
-                    <AlertDescription>
-                      <strong>Allergen Alert:</strong> This order contains{' '}
-                      {Array.from(allAllergens)
-                        .map((a) => ALLERGEN_LABELS[a].label)
-                        .join(', ')}
-                    </AlertDescription>
-                  </Alert>
+                  <div className="px-6 pb-4">
+                    <Alert>
+                      <Warning className="w-4 h-4" />
+                      <AlertDescription>
+                        <strong>Allergen Alert:</strong> This order contains{' '}
+                        {Array.from(allAllergens)
+                          .map((a) => ALLERGEN_LABELS[a].label)
+                          .join(', ')}
+                      </AlertDescription>
+                    </Alert>
+                  </div>
                 )}
 
-                <ScrollArea className="flex-1 -mx-6 px-6">
-                  <div className="space-y-4">
+                <ScrollArea className="flex-1 px-6">
+                  <div className="space-y-6 pb-4">
                     {cart.map((item) => {
                       const price =
                         item.quantity >= (item.product.bulkMinQuantity || 999) &&
@@ -219,73 +225,74 @@ export function CartPanel({
                           : item.product.price;
 
                       return (
-                        <div key={item.product.id} className="space-y-2">
-                          <div className="flex gap-3">
-                            <img
-                              src={item.product.imageUrl}
-                              alt={item.product.name}
-                              className="w-16 h-16 rounded-md object-cover"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate">
-                                {item.product.name}
-                              </h4>
-                              <p className="text-xs text-muted-foreground">
-                                {item.product.sku}
-                              </p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {item.product.allergens.map((allergen) => (
-                                  <Badge
-                                    key={allergen}
-                                    className={`text-xs ${ALLERGEN_LABELS[allergen].color}`}
-                                  >
-                                    {ALLERGEN_LABELS[allergen].label}
-                                  </Badge>
-                                ))}
+                        <div key={item.product.id}>
+                          <Card className="p-4">
+                            <div className="flex gap-4 mb-4">
+                              <img
+                                src={item.product.imageUrl}
+                                alt={item.product.name}
+                                className="w-20 h-20 rounded-lg object-cover"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-base mb-1 truncate">
+                                  {item.product.name}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {item.product.sku}
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {item.product.allergens.map((allergen) => (
+                                    <Badge
+                                      key={allergen}
+                                      variant="outline"
+                                      className={`text-xs ${ALLERGEN_LABELS[allergen].color}`}
+                                    >
+                                      {ALLERGEN_LABELS[allergen].label}
+                                    </Badge>
+                                  ))}
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() =>
-                                  onUpdateQuantity(item.product.id, item.quantity - 1)
-                                }
-                              >
-                                -
-                              </Button>
-                              <span className="text-sm font-medium w-8 text-center">
-                                {item.quantity}
+                            <div className="flex items-center justify-between pt-3 border-t">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 w-9 p-0"
+                                  onClick={() =>
+                                    onUpdateQuantity(item.product.id, item.quantity - 1)
+                                  }
+                                >
+                                  -
+                                </Button>
+                                <span className="text-sm font-semibold w-10 text-center">
+                                  {item.quantity}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 w-9 p-0"
+                                  onClick={() =>
+                                    onUpdateQuantity(item.product.id, item.quantity + 1)
+                                  }
+                                >
+                                  +
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-9 w-9 p-0 text-destructive ml-2"
+                                  onClick={() => onUpdateQuantity(item.product.id, 0)}
+                                >
+                                  <TrashSimple className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <span className="font-bold text-lg">
+                                €{(price * item.quantity).toFixed(2)}
                               </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() =>
-                                  onUpdateQuantity(item.product.id, item.quantity + 1)
-                                }
-                              >
-                                +
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-destructive"
-                                onClick={() => onUpdateQuantity(item.product.id, 0)}
-                              >
-                                <TrashSimple className="w-4 h-4" />
-                              </Button>
                             </div>
-                            <span className="font-semibold">
-                              €{(price * item.quantity).toFixed(2)}
-                            </span>
-                          </div>
-
-                          <Separator />
+                          </Card>
                         </div>
                       );
                     })}
@@ -293,13 +300,13 @@ export function CartPanel({
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="analysis" className="flex-1 flex flex-col mt-4">
-                <ScrollArea className="flex-1 -mx-6 px-6">
-                  <div className="space-y-4">
-                    <Card className="p-4 bg-gradient-to-br from-primary/5 to-accent/5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Sparkle className="w-5 h-5 text-primary" weight="fill" />
-                        <h3 className="font-semibold">AI-Powered Analysis</h3>
+              <TabsContent value="analysis" className="flex-1 flex flex-col mt-0">
+                <ScrollArea className="flex-1 px-6">
+                  <div className="space-y-6 pb-4">
+                    <Card className="p-5 bg-gradient-to-br from-primary/5 to-accent/5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Sparkle className="w-6 h-6 text-primary" weight="fill" />
+                        <h3 className="font-semibold text-lg">AI-Powered Analysis</h3>
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {profile?.name ? `Tailored for ${profile.name}` : 'Institutional nutrition analysis'}
@@ -307,25 +314,25 @@ export function CartPanel({
                     </Card>
 
                     <div>
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <ForkKnife className="w-4 h-4" />
+                      <h4 className="font-semibold mb-4 flex items-center gap-2 text-base">
+                        <ForkKnife className="w-5 h-5" />
                         Nutritional Summary
                       </h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Card className="p-3">
-                          <p className="text-xs text-muted-foreground">Total Calories</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card className="p-4">
+                          <p className="text-xs text-muted-foreground mb-2">Total Calories</p>
                           <p className="text-2xl font-bold">{totalNutrition.calories.toFixed(0)}</p>
                         </Card>
-                        <Card className="p-3">
-                          <p className="text-xs text-muted-foreground">Protein</p>
+                        <Card className="p-4">
+                          <p className="text-xs text-muted-foreground mb-2">Protein</p>
                           <p className="text-2xl font-bold">{totalNutrition.protein.toFixed(0)}g</p>
                         </Card>
-                        <Card className="p-3">
-                          <p className="text-xs text-muted-foreground">Carbs</p>
+                        <Card className="p-4">
+                          <p className="text-xs text-muted-foreground mb-2">Carbs</p>
                           <p className="text-2xl font-bold">{totalNutrition.carbs.toFixed(0)}g</p>
                         </Card>
-                        <Card className="p-3">
-                          <p className="text-xs text-muted-foreground">Fat</p>
+                        <Card className="p-4">
+                          <p className="text-xs text-muted-foreground mb-2">Fat</p>
                           <p className="text-2xl font-bold">{totalNutrition.fat.toFixed(0)}g</p>
                         </Card>
                       </div>
@@ -334,22 +341,22 @@ export function CartPanel({
                     {analysis && (
                       <>
                         <div>
-                          <h4 className="font-semibold mb-3">Insights</h4>
-                          <div className="space-y-2">
+                          <h4 className="font-semibold mb-4 text-base">Insights</h4>
+                          <div className="space-y-3">
                             {analysis.insights.map((insight, index) => (
-                              <Card key={index} className="p-3">
-                                <p className="text-sm">{insight}</p>
+                              <Card key={index} className="p-4">
+                                <p className="text-sm leading-relaxed">{insight}</p>
                               </Card>
                             ))}
                           </div>
                         </div>
 
                         <div>
-                          <h4 className="font-semibold mb-3">Recommendations</h4>
-                          <div className="space-y-2">
+                          <h4 className="font-semibold mb-4 text-base">Recommendations</h4>
+                          <div className="space-y-3">
                             {analysis.recommendations.map((rec, index) => (
-                              <Card key={index} className="p-3 bg-accent/5">
-                                <p className="text-sm">{rec}</p>
+                              <Card key={index} className="p-4 bg-accent/5">
+                                <p className="text-sm leading-relaxed">{rec}</p>
                               </Card>
                             ))}
                           </div>
@@ -361,7 +368,7 @@ export function CartPanel({
               </TabsContent>
             </Tabs>
 
-            <div className="space-y-4 pt-4 border-t mt-4">
+            <div className="space-y-6 px-6 py-6 border-t bg-background">
               {allAllergens.size === 0 && activeTab === 'cart' && (
                 <Alert>
                   <ShieldCheck className="w-4 h-4" />
@@ -371,24 +378,25 @@ export function CartPanel({
                 </Alert>
               )}
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Subtotal</span>
-                  <span>€{subtotal.toFixed(2)}</span>
+                  <span className="font-medium">€{subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-semibold text-lg">
+                <Separator />
+                <div className="flex justify-between font-bold text-xl">
                   <span>Total</span>
                   <span>€{subtotal.toFixed(2)}</span>
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={onClearCart} className="flex-1">
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={onClearCart} className="flex-1 h-11">
                   Clear Cart
                 </Button>
                 <Button 
                   onClick={handleCheckout} 
-                  className="flex-1"
+                  className="flex-1 h-11"
                   disabled={profileViolations.length > 0}
                 >
                   Place Order
