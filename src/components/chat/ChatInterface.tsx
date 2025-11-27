@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown } from '@phosphor-icons/react';
+import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown, ArrowsClockwise } from '@phosphor-icons/react';
 import { Message, CartItem, AgentType } from '@/lib/types';
 import { CONVERSATION_STARTERS } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
@@ -133,14 +133,21 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
     return AGENT_CONFIG[agent].color;
   };
 
+  const handleRefreshChat = () => {
+    setMessages(() => []);
+    setSelectedAgent('auto');
+    setInput('');
+    toast.success('Started new conversation');
+  };
+
   return (
     <div className="h-full flex flex-col">
-      <div className="px-3 py-2 border-b border-border flex-shrink-0">
+      <div className="px-3 py-2 border-b border-border flex-shrink-0 flex gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="outline" 
-              className="w-full justify-between text-xs h-8"
+              className="flex-1 justify-between text-xs h-8"
             >
               <div className="flex items-center gap-2">
                 {selectedAgent === 'auto' ? (
@@ -211,6 +218,16 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
             })}
           </DropdownMenuContent>
         </DropdownMenu>
+        
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 shrink-0"
+          onClick={handleRefreshChat}
+          title="Start new conversation"
+        >
+          <ArrowsClockwise className="w-3.5 h-3.5" weight="bold" />
+        </Button>
       </div>
 
       <ScrollArea className="flex-1 p-3" ref={scrollRef}>
@@ -433,27 +450,6 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
       </ScrollArea>
 
       <div className="p-3 border-t border-border bg-card flex-shrink-0">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground">
-            {selectedAgent === 'auto' 
-              ? 'Messages routed to relevant agents automatically' 
-              : `Direct chat with ${AGENT_CONFIG[selectedAgent]?.label || 'agent'}`
-            }
-          </span>
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-[10px] px-2"
-              onClick={() => {
-                setMessages(() => []);
-                toast.success('Chat cleared');
-              }}
-            >
-              Clear chat
-            </Button>
-          )}
-        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
