@@ -213,18 +213,18 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="space-y-4">
+      <Card className="p-6 shadow-sm border-border/60">
+        <div className="space-y-5">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Search</Label>
+              <Label className="text-base font-semibold">Search Meals</Label>
               <div className="flex items-center gap-2">
                 {isVoiceSupported && (
                   <Button
                     variant={isListening ? "destructive" : "outline"}
                     size="sm"
                     onClick={isListening ? stopVoiceSearch : startVoiceSearch}
-                    className="gap-2"
+                    className="gap-2 shadow-sm"
                   >
                     {isListening ? (
                       <>
@@ -243,16 +243,16 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
                   variant={isSemanticSearchEnabled ? 'default' : 'outline'}
                   size="sm"
                   onClick={toggleSemanticSearch}
-                  className="gap-2"
+                  className="gap-2 shadow-sm"
                 >
                   <Sparkle className={isSemanticSearchEnabled ? 'fill-current' : ''} weight={isSemanticSearchEnabled ? 'fill' : 'regular'} />
-                  AI Search {isSemanticSearchEnabled ? 'On' : 'Off'}
+                  AI Search
                 </Button>
               </div>
             </div>
             
             <div className="relative">
-              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder={
                   isSemanticSearchEnabled
@@ -261,32 +261,34 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
                 }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`pl-10 pr-10 ${isListening ? 'border-primary border-2 animate-pulse' : ''}`}
+                className={`pl-10 pr-10 h-11 ${isListening ? 'border-primary border-2 animate-pulse shadow-lg' : ''}`}
               />
               {search && (
                 <button
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors rounded-full p-1 hover:bg-muted"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" weight="bold" />
                 </button>
               )}
             </div>
 
             {isListening && (
-              <div className="flex items-center gap-2 text-sm text-primary">
+              <div className="flex items-center gap-2 text-sm text-primary font-medium bg-primary/5 rounded-lg p-3 border border-primary/20">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 Listening... Speak your search query
               </div>
             )}
 
             {isSemanticSearchEnabled && (
-              <div className="bg-accent/50 border border-primary/20 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <Sparkle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" weight="fill" />
-                  <div className="text-xs text-foreground space-y-1">
-                    <p className="font-medium">AI Semantic Search Active</p>
-                    <p className="text-muted-foreground">
+              <div className="bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 rounded-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Sparkle className="w-4 h-4 text-primary" weight="fill" />
+                  </div>
+                  <div className="text-sm text-foreground space-y-1 flex-1">
+                    <p className="font-semibold">AI Semantic Search Active</p>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
                       Search understands context and meaning. Try queries like "low carb dinner options" or "meals with chicken and vegetables"
                     </p>
                   </div>
@@ -295,21 +297,23 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
             )}
 
             {isSearching && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
                 <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                Analyzing your search with AI...
+                <span className="font-medium">Analyzing your search with AI...</span>
               </div>
             )}
 
             {semanticResults && !isSearching && (
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <Sparkle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" weight="fill" />
-                  <div className="text-xs space-y-1 flex-1">
-                    <p className="font-medium text-foreground">AI Analysis</p>
-                    <p className="text-muted-foreground">{semanticResults.explanation}</p>
-                    <Badge variant="secondary" className="text-xs mt-1">
-                      Confidence: {Math.round(semanticResults.confidence * 100)}%
+              <div className="bg-gradient-to-br from-success/5 to-primary/5 border border-primary/20 rounded-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
+                    <Sparkle className="w-4 h-4 text-success" weight="fill" />
+                  </div>
+                  <div className="text-sm space-y-2 flex-1">
+                    <p className="font-semibold text-foreground">AI Analysis Results</p>
+                    <p className="text-muted-foreground text-xs leading-relaxed">{semanticResults.explanation}</p>
+                    <Badge variant="secondary" className="text-xs font-semibold">
+                      {Math.round(semanticResults.confidence * 100)}% Confidence
                     </Badge>
                   </div>
                 </div>
@@ -318,7 +322,7 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
           </div>
 
           <div>
-            <Label className="text-sm font-medium mb-3 block">Category</Label>
+            <Label className="text-sm font-semibold mb-3 block">Filter by Category</Label>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
                 <Button
@@ -326,6 +330,9 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
                   variant={selectedCategory === category ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedCategory(category)}
+                  className={`shadow-sm transition-all ${
+                    selectedCategory === category ? 'shadow-md scale-105' : 'hover:scale-105'
+                  }`}
                 >
                   {category === 'all' ? 'All Meals' : category}
                 </Button>
@@ -336,35 +343,50 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
       </Card>
 
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">
-            {filteredMeals.length} Meal{filteredMeals.length !== 1 ? 's' : ''}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">
+              {filteredMeals.length} Meal{filteredMeals.length !== 1 ? 's' : ''}
+            </h2>
             {isSemanticSearchEnabled && semanticResults && (
-              <span className="text-sm font-normal text-muted-foreground ml-2">
-                (AI-ranked by relevance)
-              </span>
+              <p className="text-sm text-muted-foreground mt-1">
+                AI-ranked by relevance to your search
+              </p>
             )}
-          </h2>
+          </div>
         </div>
 
         {filteredMeals.length === 0 ? (
-          <Card className="p-12 text-center">
-            <MagnifyingGlass className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-            <p className="text-muted-foreground mb-2">
-              No meals match your criteria.
-            </p>
-            {isSemanticSearchEnabled ? (
-              <p className="text-sm text-muted-foreground">
-                Try rephrasing your search or turn off AI search for basic keyword matching.
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Try adjusting your filters or enable AI Search for smarter results.
-              </p>
-            )}
+          <Card className="p-16 text-center border-dashed border-2">
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto">
+                <MagnifyingGlass className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold mb-2">
+                  No meals found
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {isSemanticSearchEnabled
+                    ? "Try rephrasing your search or turn off AI search for basic keyword matching."
+                    : "Try adjusting your filters or enable AI Search for smarter results."}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearch('');
+                  setSelectedCategory('all');
+                  setSemanticResults(null);
+                }}
+                className="mt-4"
+              >
+                Clear All Filters
+              </Button>
+            </div>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredMeals.map((meal) => (
               <MealCard
                 key={meal.id}
