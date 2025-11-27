@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Calendar, ListChecks, Sparkle, Users } from '@phosphor-icons/react';
-import { MealPlan, CartItem, PlannedMeal, OrganizationProfile } from '@/lib/types';
+import { Plus, Calendar, ListChecks, Sparkle, Users, ShoppingCart } from '@phosphor-icons/react';
+import { MealPlan, CartItem, PlannedMeal, OrganizationProfile, Product } from '@/lib/types';
 import { WeeklyCalendar } from './WeeklyCalendar';
 import { CreateMealDialog } from './CreateMealDialog';
 import { MealPlansList } from './MealPlansList';
@@ -179,6 +179,64 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
     );
   };
 
+  const placeOrder = () => {
+    if (!activePlan) return;
+
+    const consolidatedMeals = new Map<string, { meal: PlannedMeal, totalServings: number }>();
+
+    activePlan.days.forEach((day) => {
+      day.meals.forEach((plannedMeal) => {
+        const mealId = plannedMeal.meal.id;
+        const existing = consolidatedMeals.get(mealId);
+        const totalServingsForMeal = plannedMeal.servings * activePlan.servingSize;
+
+        if (existing) {
+          existing.totalServings += totalServingsForMeal;
+        } else {
+          consolidatedMeals.set(mealId, {
+            meal: plannedMeal,
+            totalServings: totalServingsForMeal,
+          });
+        }
+      });
+    });
+
+    if (consolidatedMeals.size === 0) {
+      toast.error('No meals in plan to order');
+      return;
+    }
+
+    consolidatedMeals.forEach(({ meal, totalServings }) => {
+      const product: Product = {
+        id: meal.meal.id,
+        sku: `MEAL-${meal.meal.id}`,
+        name: meal.meal.name,
+        description: meal.meal.description,
+        category: meal.meal.category,
+        price: meal.meal.price,
+        unit: `per portion (${meal.meal.servingSize})`,
+        imageUrl: meal.meal.imageUrl,
+        allergens: meal.meal.allergens,
+        nutritionalInfo: meal.meal.nutritionalInfo,
+        inStock: true,
+        sustainability: meal.meal.sustainability,
+        foodSafety: meal.meal.foodSafety,
+      };
+
+      onAddToCart({
+        product,
+        quantity: totalServings,
+      });
+    });
+
+    const totalCost = Array.from(consolidatedMeals.values()).reduce(
+      (sum, { meal, totalServings }) => sum + meal.meal.price * totalServings,
+      0
+    );
+
+    toast.success(`${consolidatedMeals.size} meals added to cart! Total: €${totalCost.toFixed(2)}`);
+  };
+
   if (!activePlan) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -319,6 +377,27 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
           <ShoppingListView plan={activePlan} onAddToCart={onAddToCart} />
         </TabsContent>
       </Tabs>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-medium">Ready to order your meal plan?</p>
+              <p className="text-sm text-muted-foreground">
+                Add all meals from this plan to your cart
+              </p>
+            </div>
+            <Button 
+              onClick={placeOrder}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Place Order
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <CreateMealDialog
         open={isCreateMealOpen}
