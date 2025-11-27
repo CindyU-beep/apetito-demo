@@ -162,7 +162,7 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {trendingMeals.map((meal, index) => (
-            <Card key={meal.id} className="flex-none w-[280px] overflow-hidden border-border hover:shadow-lg transition-shadow">
+            <Card key={meal.id} className="flex-none w-[280px] overflow-hidden border-border hover:shadow-lg transition-shadow flex flex-col">
               <div className="relative h-44 bg-card">
                 <img
                   src={meal.imageUrl}
@@ -180,12 +180,14 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
                 )}
               </div>
               
-              <CardContent className="p-4 space-y-3">
-                {hasDiscount(index) && (
-                  <Badge className="bg-warning text-warning-foreground text-xs font-semibold">
-                    SAVE €{(getOriginalPrice(meal.price) - meal.price).toFixed(2)}
-                  </Badge>
-                )}
+              <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
+                <div className="h-5">
+                  {hasDiscount(index) && (
+                    <Badge className="bg-warning text-warning-foreground text-xs font-semibold">
+                      SAVE €{(getOriginalPrice(meal.price) - meal.price).toFixed(2)}
+                    </Badge>
+                  )}
+                </div>
                 
                 <div className="space-y-1">
                   <div className="flex items-baseline gap-2">
@@ -213,7 +215,7 @@ export function TrendingMeals({ onAddToCart }: TrendingMealsProps) {
                   <span className="text-muted-foreground">/ {getMealReviews(index)}</span>
                 </div>
 
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-2 mt-auto">
                   <Button
                     onClick={() => handleAddMeal(meal)}
                     className="w-full bg-success hover:bg-success/90 text-success-foreground font-semibold"
