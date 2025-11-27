@@ -325,11 +325,22 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
                 acc.totalSustainabilityScore += s.sustainabilityScore;
                 acc.sustainabilityCount++;
               }
+              if (s.transportDistance) acc.totalTransportDistance += s.transportDistance;
+              if (s.packaging?.recyclable) acc.recyclableCount++;
             }
           });
           return acc;
         },
-        { totalCO2: 0, regionalCount: 0, organicCount: 0, seasonalCount: 0, totalSustainabilityScore: 0, sustainabilityCount: 0 }
+        { 
+          totalCO2: 0, 
+          regionalCount: 0, 
+          organicCount: 0, 
+          seasonalCount: 0, 
+          totalSustainabilityScore: 0, 
+          sustainabilityCount: 0,
+          totalTransportDistance: 0,
+          recyclableCount: 0
+        }
       );
 
       const totalMeals = plan.days.reduce((sum, day) => sum + day.meals.length, 0);
@@ -338,23 +349,87 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
         : 0;
 
       if (avgSustainabilityScore > 0 && avgSustainabilityScore >= 80) {
+        const regionalPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.regionalCount / totalMeals) * 100) : 0;
+        const organicPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.organicCount / totalMeals) * 100) : 0;
+        const seasonalPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.seasonalCount / totalMeals) * 100) : 0;
+        const recyclablePercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.recyclableCount / totalMeals) * 100) : 0;
+        
+        let sustainabilityDetail = `Outstanding sustainability performance! Average score: ${avgSustainabilityScore.toFixed(0)}/100. `;
+        
+        const highlights: string[] = [];
+        if (regionalPercent >= 50) highlights.push(`${regionalPercent}% regional sourcing reduces transport emissions`);
+        if (organicPercent >= 40) highlights.push(`${organicPercent}% organic certification supports sustainable farming`);
+        if (seasonalPercent >= 50) highlights.push(`${seasonalPercent}% seasonal products minimize environmental impact`);
+        if (recyclablePercent >= 60) highlights.push(`${recyclablePercent}% recyclable packaging reduces waste`);
+        
+        if (highlights.length > 0) {
+          sustainabilityDetail += highlights.join('; ') + '. ';
+        }
+        
+        sustainabilityDetail += `Total CO₂ footprint: ${sustainabilityMetrics.totalCO2.toFixed(2)}kg (excellent for ${totalMeals} meals). `;
+        
+        if (sustainabilityMetrics.totalTransportDistance > 0) {
+          const avgTransport = sustainabilityMetrics.totalTransportDistance / totalMeals;
+          if (avgTransport < 200) {
+            sustainabilityDetail += `Average transport distance of ${avgTransport.toFixed(0)}km demonstrates strong local sourcing commitment.`;
+          }
+        }
+        
+        sustainabilityDetail += ` This meal plan aligns with Apetito's sustainability commitments and EU environmental standards.`;
+        
         newSuggestions.push({
           type: 'success',
-          title: '🌱 Excellent Sustainability',
-          description: `Average sustainability score: ${avgSustainabilityScore.toFixed(0)}/100. Your plan includes ${sustainabilityMetrics.regionalCount} regional, ${sustainabilityMetrics.organicCount} organic, and ${sustainabilityMetrics.seasonalCount} seasonal meals. Total CO₂ footprint: ${sustainabilityMetrics.totalCO2.toFixed(2)}kg.`,
+          title: '🌱 Excellent Sustainability Performance',
+          description: sustainabilityDetail,
           action: {
-            label: 'Learn More',
-            onClick: () => toast.success('Your meal plan has a low environmental impact!'),
+            label: 'View Sustainability Details',
+            onClick: () => toast.success('Your meal plan demonstrates exceptional environmental responsibility!', { duration: 5000 }),
           },
         });
-      } else if (avgSustainabilityScore > 0 && avgSustainabilityScore < 70) {
+      } else if (avgSustainabilityScore > 0 && avgSustainabilityScore >= 60 && avgSustainabilityScore < 80) {
+        const regionalPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.regionalCount / totalMeals) * 100) : 0;
+        const organicPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.organicCount / totalMeals) * 100) : 0;
+        const seasonalPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.seasonalCount / totalMeals) * 100) : 0;
+        
+        let improvementDetail = `Good sustainability baseline with score of ${avgSustainabilityScore.toFixed(0)}/100. `;
+        improvementDetail += `Current metrics: ${regionalPercent}% regional, ${organicPercent}% organic, ${seasonalPercent}% seasonal. `;
+        improvementDetail += `CO₂ footprint: ${sustainabilityMetrics.totalCO2.toFixed(2)}kg. `;
+        
+        const suggestions: string[] = [];
+        if (regionalPercent < 40) suggestions.push('increase regional sourcing to reduce transport emissions');
+        if (organicPercent < 30) suggestions.push('add more organic options for sustainable agriculture');
+        if (seasonalPercent < 40) suggestions.push('prioritize seasonal products for lower environmental impact');
+        
+        if (suggestions.length > 0) {
+          improvementDetail += `To reach excellence (80+), consider: ${suggestions.join(', ')}.`;
+        }
+        
         newSuggestions.push({
           type: 'info',
-          title: '🌍 Sustainability Improvement Available',
-          description: `Average sustainability score: ${avgSustainabilityScore.toFixed(0)}/100. Consider adding more regional, organic, or seasonal options to reduce environmental impact. Current CO₂: ${sustainabilityMetrics.totalCO2.toFixed(2)}kg.`,
+          title: '🌍 Good Sustainability - Room for Improvement',
+          description: improvementDetail,
           action: {
-            label: 'Suggest Sustainable Meals',
-            onClick: () => toast.info('Look for meals with high sustainability scores, regional sourcing, and seasonal ingredients'),
+            label: 'Sustainability Tips',
+            onClick: () => toast.info('Choose meals with high sustainability scores, regional sourcing badges, and seasonal indicators', { duration: 5000 }),
+          },
+        });
+      } else if (avgSustainabilityScore > 0 && avgSustainabilityScore < 60) {
+        const regionalPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.regionalCount / totalMeals) * 100) : 0;
+        const organicPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.organicCount / totalMeals) * 100) : 0;
+        const seasonalPercent = totalMeals > 0 ? Math.round((sustainabilityMetrics.seasonalCount / totalMeals) * 100) : 0;
+        
+        let actionDetail = `Sustainability score of ${avgSustainabilityScore.toFixed(0)}/100 suggests significant improvement opportunities. `;
+        actionDetail += `Current: ${regionalPercent}% regional, ${organicPercent}% organic, ${seasonalPercent}% seasonal. `;
+        actionDetail += `CO₂ impact: ${sustainabilityMetrics.totalCO2.toFixed(2)}kg. `;
+        actionDetail += `Apetito offers many high-sustainability alternatives (80+ scores) with regional sourcing, organic certification, and seasonal ingredients that can reduce environmental impact while maintaining quality and nutrition.`;
+        
+        newSuggestions.push({
+          type: 'warning',
+          title: '🌍 Sustainability Action Recommended',
+          description: actionDetail,
+          action: {
+            label: 'Find Sustainable Alternatives',
+            onClick: () => toast.info('Filter meals by sustainability score, look for green badges, and prioritize regional/organic/seasonal options', { duration: 6000 }),
           },
         });
       }
