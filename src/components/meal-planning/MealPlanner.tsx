@@ -333,7 +333,43 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
         </CardHeader>
       </Card>
 
-      <Card>
+      <Tabs value={view} onValueChange={(v) => setView(v as 'calendar' | 'list' | 'ai')}>
+        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">Calendar</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-2">
+            <Sparkle className="w-4 h-4" weight="fill" />
+            <span className="hidden sm:inline">AI Assistant</span>
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <ListChecks className="w-4 h-4" />
+            <span className="hidden sm:inline">Shopping List</span>
+          </TabsTrigger>
+        </TabsList>
+
+        
+
+        <TabsContent value="calendar" className="mt-6">
+          <WeeklyCalendar
+            plan={activePlan}
+            onAddMeal={(date) => {
+              setSelectedDate(new Date(date));
+              setEditingMeal(null);
+              setIsCreateMealOpen(true);
+            }}
+            onEditMeal={(meal, date) => {
+              setSelectedDate(new Date(date));
+              setEditingMeal(meal);
+              setIsCreateMealOpen(true);
+            }}
+            onRemoveMeal={removeMealFromPlan}
+          />
+        </TabsContent>
+        
+        <TabsContent> value="order" className="mt-6">
+              <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
@@ -354,37 +390,6 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
         </CardContent>
       </Card>
 
-      <Tabs value={view} onValueChange={(v) => setView(v as 'calendar' | 'list' | 'ai')}>
-        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            <span className="hidden sm:inline">Calendar</span>
-          </TabsTrigger>
-          <TabsTrigger value="ai" className="flex items-center gap-2">
-            <Sparkle className="w-4 h-4" weight="fill" />
-            <span className="hidden sm:inline">AI Assistant</span>
-          </TabsTrigger>
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <ListChecks className="w-4 h-4" />
-            <span className="hidden sm:inline">Shopping List</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="calendar" className="mt-6">
-          <WeeklyCalendar
-            plan={activePlan}
-            onAddMeal={(date) => {
-              setSelectedDate(new Date(date));
-              setEditingMeal(null);
-              setIsCreateMealOpen(true);
-            }}
-            onEditMeal={(meal, date) => {
-              setSelectedDate(new Date(date));
-              setEditingMeal(meal);
-              setIsCreateMealOpen(true);
-            }}
-            onRemoveMeal={removeMealFromPlan}
-          />
         </TabsContent>
 
         <TabsContent value="ai" className="mt-6">
@@ -398,6 +403,7 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
           <ShoppingListView plan={activePlan} onAddToCart={onAddToCart} />
         </TabsContent>
       </Tabs>
+      
 
       <CreateMealDialog
         open={isCreateMealOpen}
