@@ -4,7 +4,6 @@ import { MealPlan, PlannedMeal, OrganizationProfile, AllergenType } from '@/lib/
 import { format } from 'date-fns';
 import { Plus, Minus, PencilSimple, CaretRight, TrendUp, Warning, CheckCircle, Sparkle, Users } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useKV } from '@github/spark/hooks';
@@ -299,8 +298,8 @@ Keep it professional but emphasize the safety risk.`;
             </div>
           </div>
 
-          <ScrollArea className="w-full overflow-x-auto">
-            <div className="flex min-w-max">
+          <div className="w-full overflow-x-auto">
+            <div className="flex min-w-max pb-2">
               {plan.days.map((day, dayIndex) => {
                 const dayTotal = calculateDayTotal(day.meals);
                 const isLastDay = dayIndex === plan.days.length - 1;
@@ -419,7 +418,7 @@ Keep it professional but emphasize the safety risk.`;
                 </Button>
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </Card>
 
