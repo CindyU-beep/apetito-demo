@@ -27,12 +27,15 @@ export function ChatbotPopup({ onAddToCart }: ChatbotPopupProps) {
             className="fixed bottom-24 right-6 z-50 w-[400px] h-[600px] max-h-[calc(100vh-140px)]"
           >
             <Card className="h-full flex flex-col shadow-2xl border-border overflow-hidden">
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-card flex-shrink-0">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-gradient-to-r from-primary/5 to-accent/5 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                     <Sparkle className="w-5 h-5 text-primary-foreground" weight="fill" />
                   </div>
-                  <h3 className="font-semibold text-sm">AI Assistant</h3>
+                  <div>
+                    <h3 className="font-semibold text-sm">AI Multi-Agent Assistant</h3>
+                    <p className="text-[10px] text-muted-foreground">5 specialized agents ready to help</p>
+                  </div>
                 </div>
                 <Button
                   variant="ghost"

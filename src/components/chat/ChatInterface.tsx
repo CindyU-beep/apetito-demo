@@ -4,13 +4,21 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat } from '@phosphor-icons/react';
+import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown } from '@phosphor-icons/react';
 import { Message, CartItem, AgentType } from '@/lib/types';
 import { CONVERSATION_STARTERS } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MealCard } from '@/components/meal-planning/MealCard';
 import { coordinatorAgent } from '@/lib/agents';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
 
 type ChatInterfaceProps = {
   messages: Message[];
@@ -49,7 +57,9 @@ const AGENT_CONFIG = {
 export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<AgentType | 'auto'>('auto');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -73,9 +83,20 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const agentResponses = coordinatorAgent.analyze({
-      userQuery: text,
-    });
+    let agentResponses: ReturnType<typeof coordinatorAgent.analyze>;
+
+    if (selectedAgent === 'auto') {
+      agentResponses = coordinatorAgent.analyze({
+        userQuery: text,
+      });
+    } else {
+      agentResponses = coordinatorAgent.analyzeWithSpecificAgent(
+        {
+          userQuery: text,
+        },
+        selectedAgent
+      );
+    }
 
     const newMessages: Message[] = agentResponses.map((response, index) => ({
       id: (Date.now() + index + 1).toString(),
@@ -94,6 +115,10 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
 
     setMessages((current) => [...current, ...newMessages]);
     setIsLoading(false);
+
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
   };
 
   const getAgentAvatar = (agent?: AgentType) => {
@@ -110,29 +135,124 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
 
   return (
     <div className="h-full flex flex-col">
+      <div className="px-3 py-2 border-b border-border flex-shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="w-full justify-between text-xs h-8"
+            >
+              <div className="flex items-center gap-2">
+                {selectedAgent === 'auto' ? (
+                  <>
+                    <Sparkle className="w-3.5 h-3.5" weight="fill" />
+                    <span>Auto Mode (All Agents)</span>
+                  </>
+                ) : (
+                  <>
+                    {(() => {
+                      const Icon = AGENT_CONFIG[selectedAgent].icon;
+                      return <Icon className="w-3.5 h-3.5" weight="fill" />;
+                    })()}
+                    <span>{AGENT_CONFIG[selectedAgent].label}</span>
+                  </>
+                )}
+              </div>
+              <CaretDown className="w-3.5 h-3.5 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[356px]">
+            <DropdownMenuLabel className="text-xs">Select Agent Mode</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={() => setSelectedAgent('auto')}
+              className="text-xs cursor-pointer"
+            >
+              <div className="flex items-center gap-2 flex-1">
+                <Sparkle className="w-4 h-4" weight="fill" />
+                <div className="flex-1">
+                  <div className="font-medium">Auto Mode</div>
+                  <div className="text-muted-foreground text-[10px]">
+                    Coordinator routes to all relevant agents
+                  </div>
+                </div>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-[10px] text-muted-foreground">
+              Specialized Agents
+            </DropdownMenuLabel>
+            {Object.entries(AGENT_CONFIG).map(([key, config]) => {
+              const Icon = config.icon;
+              const agentKey = key as AgentType;
+              return (
+                <DropdownMenuItem 
+                  key={key} 
+                  onClick={() => setSelectedAgent(agentKey)}
+                  className="text-xs cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className={`w-6 h-6 rounded flex items-center justify-center ${config.color}`}>
+                      <Icon className="w-3.5 h-3.5" weight="fill" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{config.label}</div>
+                      <div className="text-muted-foreground text-[10px]">
+                        {agentKey === 'coordinator' && 'Orchestrates all agents'}
+                        {agentKey === 'budget' && 'Cost optimization & deals'}
+                        {agentKey === 'nutrition' && 'Nutritional guidance'}
+                        {agentKey === 'dietary' && 'Allergen management'}
+                        {agentKey === 'meal-planning' && 'Menu creation'}
+                      </div>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <ScrollArea className="flex-1 p-3" ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="space-y-4">
             <div className="text-center py-6">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <Sparkle className="w-6 h-6 text-primary" weight="fill" />
+                {selectedAgent === 'auto' ? (
+                  <Sparkle className="w-6 h-6 text-primary" weight="fill" />
+                ) : (
+                  (() => {
+                    const Icon = AGENT_CONFIG[selectedAgent].icon;
+                    return <Icon className="w-6 h-6 text-primary" weight="fill" />;
+                  })()
+                )}
               </div>
-              <h3 className="font-semibold text-base mb-2">Multi-Agent Assistant</h3>
+              <h3 className="font-semibold text-base mb-2">
+                {selectedAgent === 'auto' 
+                  ? 'Multi-Agent Assistant' 
+                  : AGENT_CONFIG[selectedAgent].label
+                }
+              </h3>
               <p className="text-xs text-muted-foreground mb-4">
-                Powered by specialized agents working together
+                {selectedAgent === 'auto'
+                  ? 'Powered by specialized agents working together'
+                  : `Direct chat with ${AGENT_CONFIG[selectedAgent].label}`
+                }
               </p>
               
-              <div className="flex flex-wrap gap-2 justify-center mb-4">
-                {Object.entries(AGENT_CONFIG).map(([key, config]) => {
-                  const Icon = config.icon;
-                  return (
-                    <Badge key={key} variant="outline" className="text-xs gap-1">
-                      <Icon className="w-3 h-3" weight="fill" />
-                      {config.label}
-                    </Badge>
-                  );
-                })}
-              </div>
+              {selectedAgent === 'auto' && (
+                <div className="flex flex-wrap gap-2 justify-center mb-4">
+                  {Object.entries(AGENT_CONFIG).map(([key, config]) => {
+                    const Icon = config.icon;
+                    return (
+                      <Badge key={key} variant="outline" className="text-xs gap-1">
+                        <Icon className="w-3 h-3" weight="fill" />
+                        {config.label}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -312,7 +432,28 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
         )}
       </ScrollArea>
 
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-border bg-card flex-shrink-0">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground">
+            {selectedAgent === 'auto' 
+              ? 'Messages routed to relevant agents automatically' 
+              : `Direct chat with ${AGENT_CONFIG[selectedAgent]?.label || 'agent'}`
+            }
+          </span>
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-[10px] px-2"
+              onClick={() => {
+                setMessages(() => []);
+                toast.success('Chat cleared');
+              }}
+            >
+              Clear chat
+            </Button>
+          )}
+        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -321,14 +462,26 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
           className="flex gap-2"
         >
           <Input
+            ref={inputRef}
+            id="chat-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask our specialized agents..."
-            className="flex-1 text-sm h-9"
+            placeholder={
+              selectedAgent === 'auto'
+                ? 'Ask our specialized agents...'
+                : `Ask ${AGENT_CONFIG[selectedAgent]?.label || 'agent'}...`
+            }
+            className="flex-1 text-sm h-10"
             disabled={isLoading}
+            autoComplete="off"
           />
-          <Button type="submit" disabled={!input.trim() || isLoading} size="sm" className="h-9 w-9 p-0">
-            <PaperPlaneTilt className="w-4 h-4" />
+          <Button 
+            type="submit" 
+            disabled={!input.trim() || isLoading} 
+            size="sm" 
+            className="h-10 px-4"
+          >
+            <PaperPlaneTilt className="w-4 h-4" weight="fill" />
           </Button>
         </form>
       </div>

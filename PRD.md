@@ -20,11 +20,11 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Success criteria**: Users find relevant meals within 3 clicks; 40%+ of orders initiated from home page suggestions; AI predictions achieve 75%+ relevance rating from users
 
 ### Multi-Agent Conversational Product Discovery
-- **Functionality**: AI-powered chat interface with specialized agents (Budget, Nutrition, Dietary, Meal Planning, Coordinator) that collaborate to provide comprehensive guidance on products, recipes, ingredients, and dietary requirements through natural language
-- **Purpose**: Transform complex procurement searches into intelligent conversations where specialized agents work together to address budget constraints, nutritional goals, dietary restrictions, and menu planning simultaneously, reducing cognitive load and decision time for institutional buyers
-- **Trigger**: User types query in chatbot popup (bottom-right corner) or clicks suggested conversation starters
-- **Progression**: User asks question → Coordinator Agent analyzes query → Routes to relevant specialized agents → Each applicable agent analyzes independently → Budget Agent provides cost optimization and bulk deals → Nutrition Agent ensures balanced nutritional profiles → Dietary Agent validates allergen compliance and restrictions → Meal Planning Agent suggests complete meals and menus → Agents present responses sequentially with color-coded avatars and badges → Display metadata cards (budget summaries, nutrition averages, dietary compliance) → Show relevant products and meals → User refines query or adds items to cart → Agents suggest complementary items
-- **Success criteria**: Multi-agent responses provide comprehensive guidance in single conversation; 90%+ relevance when multiple agents respond; Users identify optimal products 40% faster with agent collaboration; Clear visual distinction between agent types; Metadata summaries (budget/nutrition/dietary) display accurately
+- **Functionality**: AI-powered chat interface with agent selector dropdown and specialized agents (Budget, Nutrition, Dietary, Meal Planning, Coordinator) that collaborate to provide comprehensive guidance on products, recipes, ingredients, and dietary requirements through natural language. Users can toggle between "Auto Mode" (coordinator routes to all relevant agents) and direct chat with individual specialized agents via dropdown menu with arrow indicator.
+- **Purpose**: Transform complex procurement searches into intelligent conversations where specialized agents work together to address budget constraints, nutritional goals, dietary restrictions, and menu planning simultaneously, reducing cognitive load and decision time for institutional buyers. Agent selector empowers users to directly consult specific agents when they know their exact need.
+- **Trigger**: User clicks chatbot button (bottom-right corner) → Opens chat popup → Selects agent mode from dropdown (default: Auto Mode) → Types query in text input field or clicks suggested conversation starters
+- **Progression**: User selects agent mode from dropdown menu (Auto/Coordinator/Budget/Nutrition/Dietary/Meal Planning) → Types question in text input field → **Auto Mode**: Coordinator analyzes query → Routes to relevant specialized agents → Multiple agents respond sequentially with color-coded avatars → **Direct Mode**: Selected agent analyzes query directly → Single agent responds with specialized guidance → Budget Agent provides cost optimization and bulk deals → Nutrition Agent ensures balanced nutritional profiles → Dietary Agent validates allergen compliance and restrictions → Meal Planning Agent suggests complete meals and menus → Coordinator orchestrates all agents for complex queries → Agents present responses with color-coded avatars and badges → Display metadata cards (budget summaries, nutrition averages, dietary compliance) → Show relevant products and meals inline → User types follow-up questions → Agents maintain conversation context → User refines query, switches agents, or adds items to cart → Clear chat option to start fresh conversation
+- **Success criteria**: Multi-agent responses provide comprehensive guidance in single conversation; 90%+ relevance when multiple agents respond; Users identify optimal products 40% faster with agent collaboration; Clear visual distinction between agent types via colored avatars; Agent dropdown selection persists throughout conversation; Direct agent mode responses stay focused on agent specialty; Metadata summaries (budget/nutrition/dietary) display accurately; Text input accepts natural language queries; Chat history persists and scrolls smoothly; Agent switching does not lose conversation context
 
 ### Recipe-to-Cart Mapping
 - **Functionality**: Transform complete recipes into optimized bulk orders with automatic SKU matching and quantity calculations
@@ -174,7 +174,9 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 - **Simple Meal Card Component**: Streamlined meal card for home page with quick add-to-cart, dietary tags, allergen badges, and nutritional preview
 - **Product Card Component**: Custom layout combining Card + Badge + Button with image, SKU, pricing tiers, allergen badges, and quick-add functionality
 - **Meal Card Component**: Custom layout for complete meals showing image, name, components list, dietary tags, nutritional info, allergen badges, and "Add to Plan" action
-- **Chat Message Component**: Custom layout with Avatar + animation states for AI vs user messages, with embedded product cards and action buttons
+- **Agent Selector Dropdown**: Dropdown menu with arrow indicator allowing users to toggle between Auto Mode (all agents collaborate) and direct chat with individual specialized agents (Budget, Nutrition, Dietary, Meal Planning, Coordinator). Each agent option displays colored icon, label, and brief description of specialty.
+- **Chat Message Component**: Custom layout with Avatar + animation states for AI vs user messages, with embedded product cards and action buttons. AI messages show agent-specific colored avatars with specialty badges.
+- **Chat Input Component**: Enhanced text input field with placeholder text adapting to selected agent mode, send button, loading state, and clear chat option in footer
 - **Compliance Summary Panel**: Custom visualization showing allergen matrix, risk levels, and nutritional totals with clear visual hierarchy
 - **Recipe Mapper**: Custom interface showing original recipe → matched products with confidence indicators and manual override options
 - **Weekly Calendar Layout**: Horizontal day-by-day layout with color-coded day headers (Monday=emerald, Tuesday=sky, etc.) showing meal cards with images, components, and nutritional totals
@@ -190,11 +192,11 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 
 **Icon Selection**:
 - **Home/Navigation**: `House` for home page, `ChatsCircle` for chat, `Calendar` for planning
-- **AI Features**: `Sparkle` for AI indicators and coordinator, `TrendUp` for predictive, `ArrowsClockwise` for reorder, `Fire` for trending
-- **Specialized Agents**: `CurrencyDollar` for Budget Agent, `ForkKnife` for Nutrition Agent, `ShieldCheck` for Dietary Agent, `ChefHat` for Meal Planning Agent
+- **AI Features**: `Sparkle` for AI indicators and coordinator, `TrendUp` for predictive, `ArrowsClockwise` for reorder, `Fire` for trending, `CaretDown` for dropdown selectors
+- **Specialized Agents**: `CurrencyDollar` for Budget Agent, `ForkKnife` for Nutrition Agent, `ShieldCheck` for Dietary Agent, `ChefHat` for Meal Planning Agent, `Sparkle` for Coordinator
 - **Seasonal**: `Snowflake` for winter/Christmas, `Sun` for summer, `Leaf` for spring, `CloudRain` for autumn
 - **Insights**: `ChartLine` for analytics, `ShoppingCart` for orders, `Clock` for time-based data
-- **Chat/AI**: `ChatsCircle`, `Sparkle` for AI indicators, `PaperPlaneTilt` for send
+- **Chat/AI**: `ChatsCircle`, `Sparkle` for AI indicators, `PaperPlaneTilt` for send, `User` for user messages
 - **Products**: `ShoppingCart`, `Package`, `Barcode` for SKUs
 - **Allergen/Compliance**: `Warning`, `ShieldCheck`, `FirstAid`, `X` for clearance
 - **Food/Recipe**: `ForkKnife`, `CookingPot`, `ListChecks` for ingredients

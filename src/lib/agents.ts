@@ -343,6 +343,51 @@ class CoordinatorAgent {
     return responses;
   }
 
+  analyzeWithSpecificAgent(context: AgentContext, agentType: AgentType): AgentResponse[] {
+    const responses: AgentResponse[] = [];
+
+    switch (agentType) {
+      case 'coordinator':
+        return this.analyze(context);
+      case 'budget':
+        const budgetResponse = this.agents.budget.analyze(context);
+        responses.push(budgetResponse || this.getFallbackResponse(agentType, context));
+        break;
+      case 'nutrition':
+        const nutritionResponse = this.agents.nutrition.analyze(context);
+        responses.push(nutritionResponse || this.getFallbackResponse(agentType, context));
+        break;
+      case 'dietary':
+        const dietaryResponse = this.agents.dietary.analyze(context);
+        responses.push(dietaryResponse || this.getFallbackResponse(agentType, context));
+        break;
+      case 'meal-planning':
+        const mealPlanningResponse = this.agents.mealPlanning.analyze(context);
+        responses.push(mealPlanningResponse || this.getFallbackResponse(agentType, context));
+        break;
+    }
+
+    return responses;
+  }
+
+  private getFallbackResponse(agentType: AgentType, context: AgentContext): AgentResponse {
+    const products = MOCK_PRODUCTS.filter(p => p.inStock).slice(0, 6);
+
+    const messages: Record<AgentType, string> = {
+      'coordinator': `🎯 I'm coordinating with specialized agents. Try asking about budget, nutrition, dietary restrictions, or meal planning!`,
+      'budget': `💰 **Budget Agent:** I can help you find cost-effective options! Try asking about:\n• Budget-friendly products\n• Bulk pricing deals\n• Cost per serving analysis\n• Money-saving tips`,
+      'nutrition': `🥗 **Nutrition Agent:** I specialize in nutritional guidance! Ask me about:\n• High-protein options\n• Low-fat products\n• Calorie-conscious choices\n• Balanced nutrition`,
+      'dietary': `🛡️ **Dietary Agent:** I manage dietary restrictions! I can help with:\n• Allergen-free products\n• Gluten-free options\n• Vegan/vegetarian items\n• Specific dietary needs`,
+      'meal-planning': `👨‍🍳 **Meal Planning Agent:** Let me help you plan meals! Ask about:\n• Breakfast/lunch/dinner ideas\n• Weekly meal plans\n• Recipe ingredients\n• Menu suggestions`,
+    };
+
+    return {
+      agent: agentType,
+      message: messages[agentType],
+      data: { products },
+    };
+  }
+
   private getGeneralResponse(context: AgentContext): AgentResponse {
     const randomProducts = MOCK_PRODUCTS
       .filter(p => p.inStock)
