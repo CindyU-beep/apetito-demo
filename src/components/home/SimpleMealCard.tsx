@@ -21,14 +21,14 @@ export function SimpleMealCard({ meal, onAddToCart, showBadge, badgeContent }: S
         </div>
       )}
       
-      <div className="relative h-48">
+      <div className="relative h-32">
         <img
           src={meal.imageUrl}
           alt={meal.name}
           className="w-full h-full object-cover"
         />
         <div className="absolute top-2 right-2 flex gap-1 flex-wrap justify-end max-w-[50%]">
-          {meal.dietaryTags.slice(0, 2).map((tag) => (
+          {meal.dietaryTags.slice(0, 1).map((tag) => (
             <Badge
               key={tag}
               variant="secondary"
@@ -40,55 +40,28 @@ export function SimpleMealCard({ meal, onAddToCart, showBadge, badgeContent }: S
         </div>
       </div>
       
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-3 space-y-2">
         <div>
-          <h3 className="font-semibold text-base line-clamp-2 min-h-[3rem]">
+          <h3 className="font-semibold text-sm line-clamp-1">
             {meal.name}
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground">
             {meal.servingSize} • €{meal.price.toFixed(2)}
           </p>
         </div>
 
-        <div className="space-y-1">
-          {meal.components.slice(0, 2).map((component, idx) => (
-            <p key={idx} className="text-xs text-foreground leading-snug">
-              {component}
-            </p>
-          ))}
-          {meal.components.length > 2 && (
-            <p className="text-xs text-muted-foreground italic">
-              +{meal.components.length - 2} more...
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{meal.nutritionalInfo.calories} kcal</span>
           <span>•</span>
           <span>P: {meal.nutritionalInfo.protein}g</span>
         </div>
-
-        {meal.allergens.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {meal.allergens.slice(0, 3).map((allergen) => (
-              <Badge
-                key={allergen}
-                variant="outline"
-                className="text-xs"
-              >
-                {ALLERGEN_LABELS[allergen]?.label || allergen}
-              </Badge>
-            ))}
-          </div>
-        )}
 
         <Button
           onClick={() => onAddToCart(meal)}
           className="w-full"
           size="sm"
         >
-          <ShoppingCart className="w-4 h-4 mr-2" />
+          <ShoppingCart className="w-3 h-3 mr-1" />
           Add to Cart
         </Button>
       </CardContent>
