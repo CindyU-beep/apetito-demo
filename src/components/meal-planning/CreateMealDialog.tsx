@@ -65,10 +65,19 @@ export function CreateMealDialog({
       setAllergenWarning(violatedAllergens);
       
       if (violatedAllergens.length > 0) {
-        toast.error(
-          `⚠️ Warning: This meal contains ${violatedAllergens.join(', ')} which is restricted in your organization profile!`,
-          { duration: 5000 }
-        );
+        const hasNuts = violatedAllergens.includes('nuts');
+        
+        if (hasNuts) {
+          toast.error(
+            `🚨 CRITICAL: This meal contains NUTS which is EXCLUDED in your profile! Nut allergies can be life-threatening for ${profile.type} settings. Please reconsider.`,
+            { duration: 8000 }
+          );
+        } else {
+          toast.error(
+            `⚠️ Warning: This meal contains ${violatedAllergens.join(', ')} which is restricted in your organization profile!`,
+            { duration: 5000 }
+          );
+        }
       }
     } else {
       setAllergenWarning([]);
@@ -143,6 +152,9 @@ Return ONLY a JSON object:
     }
 
     if (allergenWarning.length > 0 && profile) {
+      const hasNuts = allergenWarning.includes('nuts');
+      const severityLevel = hasNuts ? 'CRITICAL' : 'WARNING';
+      
       const promptText = `You are a dietary safety assistant. A user is trying to add a meal to their menu that contains allergens they have excluded in their organization profile.
 
 Organization: ${profile.name}
@@ -153,18 +165,20 @@ Meal Selected: ${selectedMeal.name}
 Meal Allergens: ${selectedMeal.allergens.join(', ')}
 Violating Allergens: ${allergenWarning.join(', ')}
 
-Generate a brief (2-3 sentences) warning message that:
-1. Reminds them this violates their organization's dietary restrictions
-2. Explains the potential risks (especially for ${profile.type})
-3. Suggests they either remove this meal or update their profile if the restriction is no longer needed
+${hasNuts ? 'CRITICAL ALERT: This meal contains NUTS, which can cause severe allergic reactions and is life-threatening. This is especially serious for ' + profile.type + ' settings where vulnerable populations are served.' : ''}
 
-Keep it professional but clear about the safety concern.`;
+Generate a brief (2-3 sentences) ${severityLevel} message that:
+1. ${hasNuts ? 'Strongly emphasizes the severe danger of nut allergies and urges immediate reconsideration' : 'Reminds them this violates their organization\'s dietary restrictions'}
+2. Explains the potential risks (especially for ${profile.type})
+3. ${hasNuts ? 'Strongly recommends removing this meal unless absolutely certain the exclusion is incorrect' : 'Suggests they either remove this meal or update their profile if the restriction is no longer needed'}
+
+${hasNuts ? 'Use strong, urgent language emphasizing safety.' : 'Keep it professional but clear about the safety concern.'}`;
 
       try {
         const aiWarning = await window.spark.llm(promptText, 'gpt-4o-mini', false);
         
         toast.warning(aiWarning, {
-          duration: 8000,
+          duration: hasNuts ? 10000 : 8000,
           action: {
             label: 'Add Anyway',
             onClick: () => {

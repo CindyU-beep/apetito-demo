@@ -113,15 +113,126 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
         );
         
         if (mealsWithExcludedAllergens.length > 0) {
-          newSuggestions.push({
-            type: 'warning',
-            title: `⚠️ Allergen Violation Detected`,
-            description: `${mealsWithExcludedAllergens.length} meal(s) contain allergens that should be excluded for ${profile?.name}: ${excludedAllergens.join(', ')}. This is critical for safety!`,
-            action: {
-              label: 'Remove Violating Meals',
-              onClick: () => toast.error('Please manually review and remove meals with restricted allergens'),
-            },
+          const mealsWithNuts = mealsWithExcludedAllergens.filter(meal => 
+            meal.meal.allergens.includes('nuts')
+          );
+          
+          if (mealsWithNuts.length > 0) {
+            newSuggestions.push({
+              type: 'warning',
+              title: `🚨 CRITICAL: Nut Products Detected`,
+              description: `${mealsWithNuts.length} meal(s) contain nuts, which are excluded for ${profile?.name}. This poses a severe allergy risk! Meals: ${mealsWithNuts.map(m => m.meal.name).join(', ')}. Please remove these immediately.`,
+              action: {
+                label: 'View Nut-Containing Meals',
+                onClick: () => toast.error(`Nut products found: ${mealsWithNuts.map(m => m.meal.name).join(', ')}`, { duration: 8000 }),
+              },
+            });
+          }
+          
+          const otherAllergenMeals = mealsWithExcludedAllergens.filter(meal => 
+            !meal.meal.allergens.includes('nuts')
+          );
+          
+          if (otherAllergenMeals.length > 0) {
+            newSuggestions.push({
+              type: 'warning',
+              title: `⚠️ Allergen Violation Detected`,
+              description: `${otherAllergenMeals.length} meal(s) contain other restricted allergens for ${profile?.name}: ${excludedAllergens.filter(a => a !== 'nuts').join(', ')}. This is critical for safety!`,
+              action: {
+                label: 'Remove Violating Meals',
+                onClick: () => toast.error('Please manually review and remove meals with restricted allergens'),
+              },
+            });
+          }
+        }
+      }
+
+      const dietaryEnforcement = profile?.preferences.dietaryEnforcement;
+      if (dietaryEnforcement) {
+        if (dietaryEnforcement.requireVegetarianDaily) {
+          const daysWithoutVegetarian = plan.days.filter(day => {
+            if (day.meals.length === 0) return false;
+            return !day.meals.some(meal => 
+              meal.meal.dietaryTags.some(tag => 
+                tag.toLowerCase().includes('vegetarian') || tag.toLowerCase().includes('vegan')
+              )
+            );
           });
+          
+          if (daysWithoutVegetarian.length > 0) {
+            newSuggestions.push({
+              type: 'warning',
+              title: `🥗 Vegetarian Requirement Not Met`,
+              description: `${daysWithoutVegetarian.length} day(s) missing vegetarian options. ${profile?.name} requires at least one vegetarian meal per day.`,
+              action: {
+                label: 'Add Vegetarian Options',
+                onClick: () => suggestVegetarianMeals(),
+              },
+            });
+          }
+        }
+
+        if (dietaryEnforcement.requireVeganDaily) {
+          const daysWithoutVegan = plan.days.filter(day => {
+            if (day.meals.length === 0) return false;
+            return !day.meals.some(meal => 
+              meal.meal.dietaryTags.some(tag => tag.toLowerCase().includes('vegan'))
+            );
+          });
+          
+          if (daysWithoutVegan.length > 0) {
+            newSuggestions.push({
+              type: 'warning',
+              title: `🌱 Vegan Requirement Not Met`,
+              description: `${daysWithoutVegan.length} day(s) missing vegan options. ${profile?.name} requires at least one vegan meal per day.`,
+              action: {
+                label: 'Add Vegan Options',
+                onClick: () => suggestVeganMeals(),
+              },
+            });
+          }
+        }
+
+        if (dietaryEnforcement.minimumVegetarianPerWeek) {
+          const vegetarianMealsCount = plan.days.reduce((count, day) => 
+            count + day.meals.filter(meal => 
+              meal.meal.dietaryTags.some(tag => 
+                tag.toLowerCase().includes('vegetarian') || tag.toLowerCase().includes('vegan')
+              )
+            ).length, 0
+          );
+          
+          if (vegetarianMealsCount < dietaryEnforcement.minimumVegetarianPerWeek) {
+            newSuggestions.push({
+              type: 'warning',
+              title: `🥗 Weekly Vegetarian Quota Not Met`,
+              description: `Only ${vegetarianMealsCount} of ${dietaryEnforcement.minimumVegetarianPerWeek} required vegetarian meals this week for ${profile?.name}.`,
+              action: {
+                label: 'Add More Vegetarian Meals',
+                onClick: () => suggestVegetarianMeals(),
+              },
+            });
+          }
+        }
+
+        if (dietaryEnforcement.minimumVeganPerWeek) {
+          const veganMealsCount = plan.days.reduce((count, day) => 
+            count + day.meals.filter(meal => 
+              meal.meal.dietaryTags.some(tag => tag.toLowerCase().includes('vegan'))
+            ).length, 0
+          );
+          
+          if (veganMealsCount < dietaryEnforcement.minimumVeganPerWeek) {
+            newSuggestions.push({
+              type: 'warning',
+              title: `🌱 Weekly Vegan Quota Not Met`,
+              description: `Only ${veganMealsCount} of ${dietaryEnforcement.minimumVeganPerWeek} required vegan meals this week for ${profile?.name}.`,
+              action: {
+                label: 'Add More Vegan Meals',
+                onClick: () => suggestVeganMeals(),
+              },
+            });
+          }
         }
       }
 
@@ -236,6 +347,20 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
       
       let profileContext = '';
       if (profile) {
+        const enforcementRequirements: string[] = [];
+        if (profile.preferences.dietaryEnforcement?.requireVegetarianDaily) {
+          enforcementRequirements.push('MUST include at least one vegetarian meal per day');
+        }
+        if (profile.preferences.dietaryEnforcement?.requireVeganDaily) {
+          enforcementRequirements.push('MUST include at least one vegan meal per day');
+        }
+        if (profile.preferences.dietaryEnforcement?.minimumVegetarianPerWeek) {
+          enforcementRequirements.push(`MUST include at least ${profile.preferences.dietaryEnforcement.minimumVegetarianPerWeek} vegetarian meals per week`);
+        }
+        if (profile.preferences.dietaryEnforcement?.minimumVeganPerWeek) {
+          enforcementRequirements.push(`MUST include at least ${profile.preferences.dietaryEnforcement.minimumVeganPerWeek} vegan meals per week`);
+        }
+        
         profileContext = `\n\nORGANIZATION PROFILE - Use this context to inform your recommendations:
 - Organization: ${profile.name}
 - Type: ${profile.type}
@@ -243,7 +368,8 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
 - Dietary preferences: ${profile.preferences.dietaryRestrictions.join(', ') || 'None specified'}
 - Allergen exclusions (CRITICAL - exclude these): ${profile.preferences.allergenExclusions.join(', ') || 'None'}
 - Budget per serving: ${profile.preferences.budgetPerServing ? `$${profile.preferences.budgetPerServing.toFixed(2)}` : 'Not specified'}
-- Special requirements: ${profile.preferences.specialRequirements || 'None'}`;
+- Special requirements: ${profile.preferences.specialRequirements || 'None'}
+${enforcementRequirements.length > 0 ? `- DIETARY ENFORCEMENT REQUIREMENTS (MUST COMPLY):\n  ${enforcementRequirements.map(r => `* ${r}`).join('\n  ')}` : ''}`;
       }
       
       const restrictions = dietaryRestrictions.trim() ? `\n- Additional dietary restrictions: ${dietaryRestrictions}` : '';
@@ -342,6 +468,20 @@ Return ONLY a JSON object with this exact structure:
       
       let profileContext = '';
       if (profile) {
+        const enforcementRequirements: string[] = [];
+        if (profile.preferences.dietaryEnforcement?.requireVegetarianDaily) {
+          enforcementRequirements.push('MUST include at least one vegetarian meal per day');
+        }
+        if (profile.preferences.dietaryEnforcement?.requireVeganDaily) {
+          enforcementRequirements.push('MUST include at least one vegan meal per day');
+        }
+        if (profile.preferences.dietaryEnforcement?.minimumVegetarianPerWeek) {
+          enforcementRequirements.push(`MUST include at least ${profile.preferences.dietaryEnforcement.minimumVegetarianPerWeek} vegetarian meals per week`);
+        }
+        if (profile.preferences.dietaryEnforcement?.minimumVeganPerWeek) {
+          enforcementRequirements.push(`MUST include at least ${profile.preferences.dietaryEnforcement.minimumVeganPerWeek} vegan meals per week`);
+        }
+        
         profileContext = `\nORGANIZATION PROFILE CONTEXT (use to inform recommendations):
 - Organization: ${profile.name}
 - Type: ${profile.type}
@@ -350,6 +490,7 @@ Return ONLY a JSON object with this exact structure:
 - Allergen exclusions (MUST AVOID): ${profile.preferences.allergenExclusions.join(', ') || 'None'}
 - Budget per serving target: ${profile.preferences.budgetPerServing ? `$${profile.preferences.budgetPerServing.toFixed(2)}` : 'Not specified'}
 - Special requirements: ${profile.preferences.specialRequirements || 'None'}
+${enforcementRequirements.length > 0 ? `- DIETARY ENFORCEMENT REQUIREMENTS (MUST COMPLY):\n  ${enforcementRequirements.map(r => `* ${r}`).join('\n  ')}` : ''}
 `;
       }
       
@@ -501,6 +642,48 @@ If the request is about specific days, only modify those days. If it's about the
     toast.success(`Try: ${budgetMeals.map(m => `${m.name} (€${m.price.toFixed(2)})`).join(', ')}`);
   };
 
+  const suggestVegetarianMeals = () => {
+    let vegMeals = MOCK_MEALS.filter(m => 
+      m.dietaryTags.some(tag => 
+        tag.toLowerCase().includes('vegetarian') || tag.toLowerCase().includes('vegan')
+      )
+    );
+    
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      vegMeals = vegMeals.filter(m => 
+        !m.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+    
+    vegMeals = vegMeals.slice(0, 4);
+    
+    if (vegMeals.length > 0) {
+      toast.success(`Vegetarian options: ${vegMeals.map(m => m.name).join(', ')}`);
+    } else {
+      toast.error('No vegetarian meals available that meet your allergen restrictions');
+    }
+  };
+
+  const suggestVeganMeals = () => {
+    let veganMeals = MOCK_MEALS.filter(m => 
+      m.dietaryTags.some(tag => tag.toLowerCase().includes('vegan'))
+    );
+    
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      veganMeals = veganMeals.filter(m => 
+        !m.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+    
+    veganMeals = veganMeals.slice(0, 4);
+    
+    if (veganMeals.length > 0) {
+      toast.success(`Vegan options: ${veganMeals.map(m => m.name).join(', ')}`);
+    } else {
+      toast.error('No vegan meals available that meet your allergen restrictions');
+    }
+  };
+
   return (
     <div className="space-y-4">
       {profile && (
@@ -552,6 +735,24 @@ If the request is about specific days, only modify those days. If it's about the
                 </div>
               </div>
             )}
+            {profile.preferences.dietaryEnforcement && (
+              (profile.preferences.dietaryEnforcement.requireVegetarianDaily || 
+               profile.preferences.dietaryEnforcement.requireVeganDaily ||
+               profile.preferences.dietaryEnforcement.minimumVegetarianPerWeek ||
+               profile.preferences.dietaryEnforcement.minimumVeganPerWeek) && (
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" weight="fill" />
+                <div>
+                  <span className="font-medium text-primary">Dietary Requirements:</span>{' '}
+                  <span className="text-muted-foreground">
+                    {profile.preferences.dietaryEnforcement.requireVegetarianDaily && 'At least 1 vegetarian meal/day'}
+                    {profile.preferences.dietaryEnforcement.requireVeganDaily && 'At least 1 vegan meal/day'}
+                    {profile.preferences.dietaryEnforcement.minimumVegetarianPerWeek && `, Min ${profile.preferences.dietaryEnforcement.minimumVegetarianPerWeek} vegetarian meals/week`}
+                    {profile.preferences.dietaryEnforcement.minimumVeganPerWeek && `, Min ${profile.preferences.dietaryEnforcement.minimumVeganPerWeek} vegan meals/week`}
+                  </span>
+                </div>
+              </div>
+            ))}
             {profile.preferences.specialRequirements && (
               <div className="text-xs text-muted-foreground italic mt-2">
                 {profile.preferences.specialRequirements}

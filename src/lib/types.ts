@@ -137,6 +137,13 @@ export type MealPlan = {
 
 export type DietaryPreference = 'vegetarian' | 'vegan' | 'pescatarian' | 'halal' | 'kosher';
 
+export type DietaryEnforcement = {
+  requireVegetarianDaily?: boolean;
+  requireVeganDaily?: boolean;
+  minimumVegetarianPerWeek?: number;
+  minimumVeganPerWeek?: number;
+};
+
 export type OrganizationProfile = {
   id: string;
   name: string;
@@ -150,6 +157,7 @@ export type OrganizationProfile = {
     allergenExclusions: AllergenType[];
     budgetPerServing?: number;
     specialRequirements?: string;
+    dietaryEnforcement?: DietaryEnforcement;
   };
   orderHistory: OrderHistory[];
   createdAt: number;

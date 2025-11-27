@@ -372,6 +372,12 @@ export const MOCK_ORGANIZATION_PROFILE: OrganizationProfile = {
     allergenExclusions: ['nuts', 'shellfish'],
     budgetPerServing: 3.75,
     specialRequirements: 'Halal certification required for all meat products. Prefer organic produce when available. Must meet hospital dietary standards for patient meals.',
+    dietaryEnforcement: {
+      requireVegetarianDaily: true,
+      requireVeganDaily: false,
+      minimumVegetarianPerWeek: 7,
+      minimumVeganPerWeek: 0,
+    },
   },
   orderHistory: MOCK_ORDER_HISTORY,
   createdAt: Date.now() - 180 * 24 * 60 * 60 * 1000,

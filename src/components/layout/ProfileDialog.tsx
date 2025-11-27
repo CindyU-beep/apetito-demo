@@ -272,6 +272,115 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                 </div>
               </div>
 
+              <div className="border-t pt-4">
+                <Label className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="w-4 h-4" />
+                  Dietary Enforcement Requirements
+                </Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Set mandatory dietary requirements for meal planning (e.g., ensure vegetarian options are available)
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="require-veg-daily" className="text-sm font-normal cursor-pointer">
+                        Require at least one vegetarian meal per day
+                      </Label>
+                    </div>
+                    <input
+                      id="require-veg-daily"
+                      type="checkbox"
+                      checked={editedProfile.preferences.dietaryEnforcement?.requireVegetarianDaily || false}
+                      onChange={(e) => setEditedProfile(prev => ({
+                        ...prev,
+                        preferences: {
+                          ...prev.preferences,
+                          dietaryEnforcement: {
+                            ...prev.preferences.dietaryEnforcement,
+                            requireVegetarianDaily: e.target.checked,
+                          },
+                        },
+                      }))}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="require-vegan-daily" className="text-sm font-normal cursor-pointer">
+                        Require at least one vegan meal per day
+                      </Label>
+                    </div>
+                    <input
+                      id="require-vegan-daily"
+                      type="checkbox"
+                      checked={editedProfile.preferences.dietaryEnforcement?.requireVeganDaily || false}
+                      onChange={(e) => setEditedProfile(prev => ({
+                        ...prev,
+                        preferences: {
+                          ...prev.preferences,
+                          dietaryEnforcement: {
+                            ...prev.preferences.dietaryEnforcement,
+                            requireVeganDaily: e.target.checked,
+                          },
+                        },
+                      }))}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="min-veg-weekly" className="text-sm">
+                      Minimum vegetarian meals per week
+                    </Label>
+                    <Input
+                      id="min-veg-weekly"
+                      type="number"
+                      min="0"
+                      max="21"
+                      value={editedProfile.preferences.dietaryEnforcement?.minimumVegetarianPerWeek || ''}
+                      onChange={(e) => setEditedProfile(prev => ({
+                        ...prev,
+                        preferences: {
+                          ...prev.preferences,
+                          dietaryEnforcement: {
+                            ...prev.preferences.dietaryEnforcement,
+                            minimumVegetarianPerWeek: parseInt(e.target.value) || undefined,
+                          },
+                        },
+                      }))}
+                      placeholder="e.g., 7"
+                      className="w-32"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="min-vegan-weekly" className="text-sm">
+                      Minimum vegan meals per week
+                    </Label>
+                    <Input
+                      id="min-vegan-weekly"
+                      type="number"
+                      min="0"
+                      max="21"
+                      value={editedProfile.preferences.dietaryEnforcement?.minimumVeganPerWeek || ''}
+                      onChange={(e) => setEditedProfile(prev => ({
+                        ...prev,
+                        preferences: {
+                          ...prev.preferences,
+                          dietaryEnforcement: {
+                            ...prev.preferences.dietaryEnforcement,
+                            minimumVeganPerWeek: parseInt(e.target.value) || undefined,
+                          },
+                        },
+                      }))}
+                      placeholder="e.g., 3"
+                      className="w-32"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="special-requirements">Special Requirements</Label>
                 <Textarea
