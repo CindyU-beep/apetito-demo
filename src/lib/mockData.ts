@@ -4,7 +4,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '1',
     sku: 'APT-001',
-    name: 'Schweinebraten mit Soße',
+    name: 'Pork Roast with Gravy',
     description: 'Tender pork roast with rich gravy, a classic German favorite',
     category: 'Meat Dishes',
     price: 8.50,
@@ -45,7 +45,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '2',
     sku: 'APT-002',
-    name: 'Hähnchenschnitzel paniert',
+    name: 'Breaded Chicken Schnitzel',
     description: 'Breaded chicken schnitzel, crispy and golden',
     category: 'Poultry',
     price: 7.80,
@@ -86,7 +86,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '3',
     sku: 'APT-003',
-    name: 'Kartoffelpüree',
+    name: 'Mashed Potatoes',
     description: 'Creamy mashed potatoes, smooth and delicious',
     category: 'Sides',
     price: 3.20,
@@ -127,7 +127,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '4',
     sku: 'APT-004',
-    name: 'Rotkohl',
+    name: 'Red Cabbage',
     description: 'Traditional German red cabbage with apples and spices',
     category: 'Vegetables',
     price: 3.50,
@@ -210,7 +210,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '6',
     sku: 'APT-006',
-    name: 'Rinderroulade',
+    name: 'Beef Roulade',
     description: 'Beef roulade with bacon, pickles and mustard',
     category: 'Meat Dishes',
     price: 9.50,
@@ -251,7 +251,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '7',
     sku: 'APT-007',
-    name: 'Seelachs-Filet mit Buttersoße',
+    name: 'Pollock Fillet with Butter Sauce',
     description: 'Pollock fillet with delicate butter sauce',
     category: 'Fish',
     price: 8.20,
@@ -292,7 +292,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '8',
     sku: 'APT-008',
-    name: 'Grüne Bohnen',
+    name: 'Green Beans',
     description: 'Fresh green beans, lightly seasoned',
     category: 'Vegetables',
     price: 3.20,
@@ -334,7 +334,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '9',
     sku: 'APT-009',
-    name: 'Salzkartoffeln',
+    name: 'Boiled Potatoes',
     description: 'Classic boiled potatoes with salt',
     category: 'Sides',
     price: 2.80,
@@ -375,7 +375,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '10',
     sku: 'APT-010',
-    name: 'Bratensoße',
+    name: 'Roast Gravy',
     description: 'Rich, savory gravy perfect for meat dishes',
     category: 'Sauces',
     price: 12.50,
@@ -416,7 +416,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '11',
     sku: 'APT-011',
-    name: 'Gemischtes Gemüse',
+    name: 'Mixed Vegetables',
     description: 'Mixed vegetables with carrots, broccoli, and cauliflower',
     category: 'Vegetables',
     price: 3.50,
@@ -458,7 +458,7 @@ export const MOCK_PRODUCTS: Product[] = [
   {
     id: '12',
     sku: 'APT-012',
-    name: 'Königsberger Klopse',
+    name: 'Königsberg Meatballs',
     description: 'Traditional meatballs in creamy caper sauce',
     category: 'Meat Dishes',
     price: 8.80,
@@ -642,11 +642,11 @@ export const MOCK_ORGANIZATION_PROFILE: OrganizationProfile = {
 export const MOCK_MEALS: Meal[] = [
   {
     id: 'meal-1',
-    name: 'Veggie-Schnitzel auf Weizenbasis',
+    name: 'Wheat-Based Veggie Schnitzel',
     description: 'Crispy vegetarian schnitzel on wheat basis',
     category: 'Vegetarian',
     imageUrl: 'https://images.unsplash.com/photo-1600803907087-f56d462fd26b?w=400&h=300&fit=crop',
-    components: ['Veggie-Schnitzel', 'Soße "Balkan Art"'],
+    components: ['Veggie Schnitzel', 'Balkan-Style Sauce'],
     allergens: ['gluten', 'soy'],
     nutritionalInfo: {
       calories: 420,
@@ -681,11 +681,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-2',
-    name: 'Grüne Bohnen "naturell"',
+    name: 'Natural Green Beans',
     description: 'Natural green beans, lightly seasoned',
     category: 'Vegetables',
     imageUrl: 'https://images.unsplash.com/photo-1556801712-76c8eb07bbc9?w=400&h=300&fit=crop',
-    components: ['Grüne Bohnen'],
+    components: ['Green Beans'],
     allergens: [],
     nutritionalInfo: {
       calories: 65,
@@ -721,11 +721,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-3',
-    name: 'Salzkartoffel',
+    name: 'Boiled Potatoes',
     description: 'Classic boiled potatoes with salt',
     category: 'Sides',
     imageUrl: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&h=300&fit=crop',
-    components: ['Salzkartoffel'],
+    components: ['Boiled Potatoes'],
     allergens: [],
     nutritionalInfo: {
       calories: 180,
@@ -761,14 +761,14 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-4',
-    name: 'Veggie-Frikassee "Frühlings Art"',
+    name: 'Spring-Style Veggie Fricassee',
     description: 'Spring-style vegetarian fricassee with vegetables in cream sauce',
     category: 'Vegetarian',
     imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop',
     components: [
-      'Geschnetzeltes auf Erbsen- und Weizenbasis',
-      'Helle Gemüsesoße mit Erbsen',
-      'Möhren und Champignons',
+      'Shredded Pea and Wheat Base',
+      'Light Vegetable Sauce with Peas',
+      'Carrots and Mushrooms',
     ],
     allergens: ['gluten', 'dairy', 'soy'],
     nutritionalInfo: {
@@ -783,11 +783,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-5',
-    name: 'Fingermöhren "naturell"',
+    name: 'Natural Baby Carrots',
     description: 'Natural baby carrots, tender and sweet',
     category: 'Vegetables',
     imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=300&fit=crop',
-    components: ['Fingermöhren'],
+    components: ['Baby Carrots'],
     allergens: [],
     nutritionalInfo: {
       calories: 55,
@@ -801,11 +801,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-6',
-    name: 'Naturreis',
+    name: 'Brown Rice',
     description: 'Wholesome natural brown rice',
     category: 'Sides',
     imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop',
-    components: ['Naturreis'],
+    components: ['Brown Rice'],
     allergens: [],
     nutritionalInfo: {
       calories: 215,
@@ -819,11 +819,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-7',
-    name: 'Bunter Spitzkohl-Gemüsetopf "vegetarisch"',
+    name: 'Colorful Pointed Cabbage Stew (Vegetarian)',
     description: 'Colorful pointed cabbage vegetable stew',
     category: 'Vegetarian',
     imageUrl: 'https://images.unsplash.com/photo-1547928576-4a5a5c7781ef?w=400&h=300&fit=crop',
-    components: ['Bunter Spitzkohl', 'Gemüse-Mix'],
+    components: ['Colorful Pointed Cabbage', 'Vegetable Mix'],
     allergens: ['gluten'],
     nutritionalInfo: {
       calories: 320,
@@ -837,11 +837,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-8',
-    name: 'Vollkornbrötchen',
+    name: 'Whole Grain Rolls',
     description: 'Hearty whole grain rolls',
     category: 'Bread',
     imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop',
-    components: ['Vollkornbrötchen'],
+    components: ['Whole Grain Rolls'],
     allergens: ['gluten'],
     nutritionalInfo: {
       calories: 245,
@@ -855,11 +855,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-9',
-    name: 'Joghurt mit Früchten',
+    name: 'Yogurt with Fruits',
     description: 'Creamy yogurt with fresh fruits',
     category: 'Dessert',
     imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=300&fit=crop',
-    components: ['Joghurt', 'Früchte'],
+    components: ['Yogurt', 'Fruits'],
     allergens: ['dairy'],
     nutritionalInfo: {
       calories: 180,
@@ -878,9 +878,9 @@ export const MOCK_MEALS: Meal[] = [
     category: 'Vegetarian',
     imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop',
     components: [
-      'Tortellini in Butternut-Kürbissoße',
-      'Mit Rucola Kürbiskernen',
-      'Quinoa verfeinert',
+      'Tortellini in Butternut Squash Sauce',
+      'With Arugula and Pumpkin Seeds',
+      'Refined with Quinoa',
     ],
     allergens: ['gluten', 'dairy', 'eggs'],
     nutritionalInfo: {
@@ -895,11 +895,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-11',
-    name: 'Salat',
+    name: 'Mixed Salad',
     description: 'Fresh mixed salad',
     category: 'Salad',
     imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop',
-    components: ['Gemischter Salat'],
+    components: ['Mixed Salad'],
     allergens: [],
     nutritionalInfo: {
       calories: 45,
@@ -913,14 +913,14 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-12',
-    name: 'Herzhafter Michel',
+    name: 'Hearty Bread Casserole',
     description: 'Hearty casserole with broccoli, tomato and onions with cheese topping',
     category: 'Main',
     imageUrl: 'https://images.unsplash.com/photo-1604908815875-6d0e27bf6d0e?w=400&h=300&fit=crop',
     components: [
-      'Brotauflauf mit Brokkoli',
-      'Tomate und Zwiebeln',
-      'Mit Käse überbacken',
+      'Bread Casserole with Broccoli',
+      'Tomato and Onions',
+      'Topped with Cheese',
     ],
     allergens: ['gluten', 'dairy', 'eggs'],
     nutritionalInfo: {
@@ -935,11 +935,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-13',
-    name: 'Obst der Saison',
+    name: 'Seasonal Fruit',
     description: 'Fresh seasonal fruit',
     category: 'Dessert',
     imageUrl: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=400&h=300&fit=crop',
-    components: ['Obst der Saison'],
+    components: ['Seasonal Fruit'],
     allergens: [],
     nutritionalInfo: {
       calories: 85,
@@ -953,11 +953,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-14',
-    name: 'Hähnchenbrust-Geschnetzeltes',
+    name: 'Sliced Chicken Breast',
     description: 'Sliced chicken breast in creamy sauce',
     category: 'Poultry',
     imageUrl: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=400&h=300&fit=crop',
-    components: ['Hähnchenbrust', 'Cremige Soße'],
+    components: ['Chicken Breast', 'Creamy Sauce'],
     allergens: ['dairy'],
     nutritionalInfo: {
       calories: 385,
@@ -971,11 +971,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-15',
-    name: 'Lachsfilet mit Kräuterkruste',
+    name: 'Salmon Fillet with Herb Crust',
     description: 'Salmon fillet with herb crust',
     category: 'Fish',
     imageUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=300&fit=crop',
-    components: ['Lachsfilet', 'Kräuterkruste'],
+    components: ['Salmon Fillet', 'Herb Crust'],
     allergens: ['fish', 'gluten'],
     nutritionalInfo: {
       calories: 420,
@@ -989,11 +989,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-16',
-    name: 'Rinderbraten mit Rotkohl',
+    name: 'Roast Beef with Red Cabbage',
     description: 'Roast beef with red cabbage',
     category: 'Meat',
     imageUrl: 'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=400&h=300&fit=crop',
-    components: ['Rinderbraten', 'Rotkohl', 'Soße'],
+    components: ['Roast Beef', 'Red Cabbage', 'Gravy'],
     allergens: [],
     nutritionalInfo: {
       calories: 485,
@@ -1007,11 +1007,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-17',
-    name: 'Kartoffelpüree',
+    name: 'Mashed Potatoes',
     description: 'Creamy mashed potatoes',
     category: 'Sides',
     imageUrl: 'https://images.unsplash.com/photo-1585232351592-856a2f2c4df3?w=400&h=300&fit=crop',
-    components: ['Kartoffelpüree'],
+    components: ['Mashed Potatoes'],
     allergens: ['dairy'],
     nutritionalInfo: {
       calories: 195,
@@ -1025,11 +1025,11 @@ export const MOCK_MEALS: Meal[] = [
   },
   {
     id: 'meal-18',
-    name: 'Gemischtes Gemüse',
+    name: 'Mixed Vegetables',
     description: 'Mixed vegetables medley',
     category: 'Vegetables',
     imageUrl: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=400&h=300&fit=crop',
-    components: ['Karotten', 'Brokkoli', 'Blumenkohl'],
+    components: ['Carrots', 'Broccoli', 'Cauliflower'],
     allergens: [],
     nutritionalInfo: {
       calories: 75,
@@ -1065,7 +1065,7 @@ export const MOCK_MEALS: Meal[] = [
     description: 'Classic Italian dessert',
     category: 'Dessert',
     imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop',
-    components: ['Mascarpone', 'Espresso', 'Löffelbiskuit'],
+    components: ['Mascarpone', 'Espresso', 'Ladyfingers'],
     allergens: ['gluten', 'dairy', 'eggs'],
     nutritionalInfo: {
       calories: 385,
