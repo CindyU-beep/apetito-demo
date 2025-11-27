@@ -73,19 +73,31 @@ export type OrderHistory = {
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-export type PlannedMeal = {
+export type Meal = {
   id: string;
   name: string;
-  mealType: MealType;
-  servings: number;
-  ingredients: RecipeIngredient[];
-  notes?: string;
-  nutritionalTotals?: {
+  description: string;
+  category: string;
+  imageUrl: string;
+  components: string[];
+  allergens: AllergenType[];
+  nutritionalInfo: {
     calories: number;
     protein: number;
     carbs: number;
     fat: number;
   };
+  dietaryTags: string[];
+  price: number;
+  servingSize: string;
+};
+
+export type PlannedMeal = {
+  id: string;
+  meal: Meal;
+  mealType: MealType;
+  servings: number;
+  notes?: string;
 };
 
 export type DayPlan = {

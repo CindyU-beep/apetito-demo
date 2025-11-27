@@ -70,11 +70,11 @@ function App() {
             </TabsTrigger>
             <TabsTrigger value="browse" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
-              <span className="hidden sm:inline">Browse</span>
+              <span className="hidden sm:inline">Meals</span>
             </TabsTrigger>
             <TabsTrigger value="meal-planning" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Meal Plans</span>
+              <span className="hidden sm:inline">Plan</span>
             </TabsTrigger>
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <ClockCounterClockwise className="w-4 h-4" />

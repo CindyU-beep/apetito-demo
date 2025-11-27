@@ -48,11 +48,11 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Success criteria**: Clear display of volume discounts; delivery scheduling reduces repeat ordering time by 50%
 
 ### Meal Planning & Menu Management
-- **Functionality**: Weekly meal planning interface with drag-and-drop calendar, recipe ingredient extraction, and automatic shopping list generation
-- **Purpose**: Enable institutional buyers to plan weekly menus in advance, visualize nutritional totals across days, and automatically convert meal plans into consolidated procurement orders
-- **Trigger**: User navigates to "Meal Plans" tab; clicks "Create New Meal Plan" or selects existing plan
-- **Progression**: User creates weekly plan → Adds meals to specific days with meal type (breakfast/lunch/dinner/snack) → AI generates ingredient suggestions based on meal name → User reviews ingredients and servings → System consolidates all ingredients across week → Matches ingredients to available products → User checks off items and adds matched products to cart
-- **Success criteria**: Meal plans persist across sessions; ingredient matching achieves 70%+ accuracy; consolidated shopping lists reduce duplicate ordering; nutritional totals display correctly per day
+- **Functionality**: Weekly meal planning interface with horizontal day layout showing meal cards, meal catalog browsing for complete dishes from Apetito menu, and automatic shopping list generation with cost estimation
+- **Purpose**: Enable institutional buyers to plan weekly menus in advance by selecting complete meals from Apetito's catalog, visualize nutritional totals across days, and track estimated costs
+- **Trigger**: User navigates to "Plan" tab; clicks "Create New Meal Plan" or selects existing plan; browses meals in "Meals" tab
+- **Progression**: User creates weekly plan → Browses Apetito meal catalog (Vegetarian, Main, Sides, Desserts, etc.) → Selects meals and adds to specific days with serving quantities → System shows meals organized by day with color-coded headers → Shopping list view shows consolidated meal summary with total servings and cost estimates → User can track which meals have been ordered
+- **Success criteria**: Meal plans persist across sessions; meals display with images and components; weekly view clearly shows all days with color-coded organization; cost estimation accurate per serving; shopping list provides clear meal consolidation
 
 ## Edge Case Handling
 
@@ -61,9 +61,10 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Ambiguous Allergen Data**: Display "unverified" status with contact option for manual verification
 - **Recipe Parsing Failures**: Graceful fallback to manual ingredient entry with AI-assisted autocomplete
 - **Complex Dietary Restrictions**: Multi-filter support (vegan + gluten-free + nut-free) with clear "no matches" messaging
-- **Unmatched Ingredients**: When meal plan ingredients don't match products, display clear "manual search needed" status with search shortcuts
+- **Unmatched Ingredients**: Shopping list now shows meal summaries with cost per serving instead of raw ingredients
 - **Empty Meal Plans**: Guide users to create first plan with clear benefits and example use cases
 - **Overlapping Meal Plans**: Allow multiple plans but clearly indicate which is "active" for shopping list generation
+- **Meal Selection**: Browsing 20+ prepared meals from Apetito catalog with search, category filters, and allergen exclusions
 - **Large Orders**: Performance optimization with progressive loading and cart summarization
 - **Offline Mode**: Queue actions locally with sync indicators and retry logic
 
@@ -149,11 +150,13 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 
 **Customizations**:
 - **Product Card Component**: Custom layout combining Card + Badge + Button with image, SKU, pricing tiers, allergen badges, and quick-add functionality
+- **Meal Card Component**: Custom layout for complete meals showing image, name, components list, dietary tags, nutritional info, allergen badges, and "Add to Plan" action
 - **Chat Message Component**: Custom layout with Avatar + animation states for AI vs user messages, with embedded product cards and action buttons
 - **Compliance Summary Panel**: Custom visualization showing allergen matrix, risk levels, and nutritional totals with clear visual hierarchy
 - **Recipe Mapper**: Custom interface showing original recipe → matched products with confidence indicators and manual override options
-- **Weekly Calendar Grid**: Custom meal planning calendar with day cards showing meal type badges, nutritional summaries, and inline meal management
-- **Shopping List Consolidator**: Custom ingredient aggregation view with checkboxes, product matching indicators, and bulk "add to cart" actions
+- **Weekly Calendar Layout**: Horizontal day-by-day layout with color-coded day headers (Monday=emerald, Tuesday=sky, etc.) showing meal cards with images, components, and nutritional totals
+- **Meal Selection Dialog**: Custom meal browser with search, grid layout of meal cards, selection state, and serving quantity input
+- **Shopping List Summary**: Consolidated meal overview showing unique meals, total servings, and estimated costs with checkboxes for tracking
 
 **States**:
 - **Buttons**: Default, Hover (subtle lift + shadow), Active (pressed scale), Loading (spinner), Disabled (reduced opacity)

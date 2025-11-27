@@ -3,11 +3,20 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { MagnifyingGlass } from '@phosphor-icons/react';
-import { MOCK_PRODUCTS, ALLERGEN_LABELS } from '@/lib/mockData';
-import { ProductCard } from './ProductCard';
-import { CartItem, AllergenType } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { MagnifyingGlass, Calendar } from '@phosphor-icons/react';
+import { MOCK_MEALS, ALLERGEN_LABELS } from '@/lib/mockData';
+import { MealCard } from './MealCard';
+import { CartItem, AllergenType, Meal, PlannedMeal } from '@/lib/types';
 import { toast } from 'sonner';
+import { format, startOfWeek, addDays } from 'date-fns';
 
 type BrowseProductsProps = {
   onAddToCart: (item: CartItem) => void;
@@ -16,18 +25,26 @@ type BrowseProductsProps = {
 export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
   const [search, setSearch] = useState('');
   const [excludedAllergens, setExcludedAllergens] = useState<AllergenType[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isAddToPlanOpen, setIsAddToPlanOpen] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
 
-  const filteredProducts = MOCK_PRODUCTS.filter((product) => {
-    const matchesSearch = 
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.description.toLowerCase().includes(search.toLowerCase()) ||
-      product.category.toLowerCase().includes(search.toLowerCase());
+  const categories = ['all', ...Array.from(new Set(MOCK_MEALS.map((m) => m.category)))];
+
+  const filteredMeals = MOCK_MEALS.filter((meal) => {
+    const matchesSearch =
+      meal.name.toLowerCase().includes(search.toLowerCase()) ||
+      meal.description.toLowerCase().includes(search.toLowerCase()) ||
+      meal.category.toLowerCase().includes(search.toLowerCase()) ||
+      meal.components.some((c) => c.toLowerCase().includes(search.toLowerCase()));
 
     const matchesAllergens = excludedAllergens.every(
-      (allergen) => !product.allergens.includes(allergen)
+      (allergen) => !meal.allergens.includes(allergen)
     );
 
-    return matchesSearch && matchesAllergens;
+    const matchesCategory = selectedCategory === 'all' || meal.category === selectedCategory;
+
+    return matchesSearch && matchesAllergens && matchesCategory;
   });
 
   const toggleAllergen = (allergen: AllergenType) => {
@@ -38,6 +55,11 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
     );
   };
 
+  const handleAddToPlan = (meal: Meal) => {
+    setSelectedMeal(meal);
+    setIsAddToPlanOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -45,11 +67,27 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
           <div className="relative">
             <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="Search products by name, category, or description..."
+              placeholder="Search meals by name, category, or ingredients..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
             />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-3 block">Category:</Label>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category === 'all' ? 'All Meals' : category}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -77,37 +115,46 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">
-            {filteredProducts.length} Products
-          </h2>
+          <h2 className="text-lg font-semibold">{filteredMeals.length} Meals</h2>
           {excludedAllergens.length > 0 && (
             <p className="text-sm text-muted-foreground">
-              Filtering {excludedAllergens.length} allergen{excludedAllergens.length > 1 ? 's' : ''}
+              Filtering {excludedAllergens.length} allergen
+              {excludedAllergens.length > 1 ? 's' : ''}
             </p>
           )}
         </div>
 
-        {filteredProducts.length === 0 ? (
+        {filteredMeals.length === 0 ? (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">
-              No products match your criteria. Try adjusting your filters.
+              No meals match your criteria. Try adjusting your filters.
             </p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={(quantity) => {
-                  onAddToCart({ product, quantity });
-                  toast.success(`Added ${product.name} to cart`);
-                }}
+            {filteredMeals.map((meal) => (
+              <MealCard
+                key={meal.id}
+                meal={meal}
+                onAddToPlan={() => handleAddToPlan(meal)}
               />
             ))}
           </div>
         )}
       </div>
+
+      <Dialog open={isAddToPlanOpen} onOpenChange={setIsAddToPlanOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add to Meal Plan</DialogTitle>
+            <DialogDescription>
+              This feature will be available once you create a meal plan. Go to the Meal Plans
+              tab to get started.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => setIsAddToPlanOpen(false)}>Got it</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
