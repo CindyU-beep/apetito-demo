@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkle, TrendUp, Warning, CheckCircle, Lightning, MagicWand, Brain, ChartBar, Users } from '@phosphor-icons/react';
-import { MealPlan, PlannedMeal, Meal } from '@/lib/types';
+import { MealPlan, PlannedMeal, Meal, OrganizationProfile } from '@/lib/types';
 import { MOCK_MEALS } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useKV } from '@github/spark/hooks';
 
 type MealPlanningAIProps = {
   plan: MealPlan;
@@ -37,15 +38,16 @@ type NutritionalBalance = {
 };
 
 export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps) {
+  const [profile] = useKV<OrganizationProfile | null>('organization-profile', null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isProcessingCustom, setIsProcessingCustom] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [nutritionalBalance, setNutritionalBalance] = useState<NutritionalBalance | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
-  const [peopleCount, setPeopleCount] = useState('50');
+  const [peopleCount, setPeopleCount] = useState(profile?.servingCapacity?.toString() || '50');
   const [dietaryRestrictions, setDietaryRestrictions] = useState('');
-  const [budgetPerMeal, setBudgetPerMeal] = useState('');
+  const [budgetPerMeal, setBudgetPerMeal] = useState(profile?.preferences.budgetPerServing?.toString() || '');
 
   const analyzeMealPlan = async () => {
     setIsAnalyzing(true);
@@ -102,6 +104,43 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
 
       const newSuggestions: AISuggestion[] = [];
 
+      const excludedAllergens = profile?.preferences.allergenExclusions || [];
+      if (excludedAllergens.length > 0) {
+        const mealsWithExcludedAllergens = plan.days.flatMap(day => 
+          day.meals.filter(meal => 
+            meal.meal.allergens.some(allergen => excludedAllergens.includes(allergen))
+          )
+        );
+        
+        if (mealsWithExcludedAllergens.length > 0) {
+          newSuggestions.push({
+            type: 'warning',
+            title: `⚠️ Allergen Violation Detected`,
+            description: `${mealsWithExcludedAllergens.length} meal(s) contain allergens that should be excluded for ${profile?.name}: ${excludedAllergens.join(', ')}. This is critical for safety!`,
+            action: {
+              label: 'Remove Violating Meals',
+              onClick: () => toast.error('Please manually review and remove meals with restricted allergens'),
+            },
+          });
+        }
+      }
+
+      const targetBudget = profile?.preferences.budgetPerServing || 5;
+      const servingCapacity = profile?.servingCapacity || 50;
+      const avgCostPerServing = balance.costPerDay / servingCapacity;
+      
+      if (avgCostPerServing > targetBudget * 1.2) {
+        newSuggestions.push({
+          type: 'warning',
+          title: 'Budget Target Exceeded',
+          description: `Cost is $${avgCostPerServing.toFixed(2)}/serving, above your target of $${targetBudget.toFixed(2)}/serving for ${profile?.name || 'your organization'}.`,
+          action: {
+            label: 'Suggest Budget-Friendly Options',
+            onClick: () => suggestBudgetMeals(),
+          },
+        });
+      }
+
       if (balance.avgCalories < 1500) {
         newSuggestions.push({
           type: 'warning',
@@ -150,7 +189,7 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
         });
       }
 
-      if (balance.costPerDay > 15) {
+      if (balance.costPerDay > 15 && !profile?.preferences.budgetPerServing) {
         newSuggestions.push({
           type: 'info',
           title: 'Budget Optimization',
@@ -163,10 +202,14 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
       }
 
       if (newSuggestions.length === 0) {
+        let message = 'Your meal plan looks nutritionally balanced and varied.';
+        if (profile?.name) {
+          message = `Your meal plan meets all requirements for ${profile.name}!`;
+        }
         newSuggestions.push({
           type: 'success',
           title: 'Well-Balanced Plan!',
-          description: 'Your meal plan looks nutritionally balanced and varied.',
+          description: message,
         });
       }
 
@@ -191,11 +234,23 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
         allergens: m.allergens
       })));
       
-      const restrictions = dietaryRestrictions.trim() ? `\n- Dietary restrictions: ${dietaryRestrictions}` : '';
-      const budget = budgetPerMeal.trim() ? `\n- Budget limit: €${budgetPerMeal} per meal` : '';
+      let profileContext = '';
+      if (profile) {
+        profileContext = `\n\nORGANIZATION PROFILE - Use this context to inform your recommendations:
+- Organization: ${profile.name}
+- Type: ${profile.type}
+- Serving capacity: ${profile.servingCapacity || 'Not specified'} people
+- Dietary preferences: ${profile.preferences.dietaryRestrictions.join(', ') || 'None specified'}
+- Allergen exclusions (CRITICAL - exclude these): ${profile.preferences.allergenExclusions.join(', ') || 'None'}
+- Budget per serving: ${profile.preferences.budgetPerServing ? `$${profile.preferences.budgetPerServing.toFixed(2)}` : 'Not specified'}
+- Special requirements: ${profile.preferences.specialRequirements || 'None'}`;
+      }
+      
+      const restrictions = dietaryRestrictions.trim() ? `\n- Additional dietary restrictions: ${dietaryRestrictions}` : '';
+      const budget = budgetPerMeal.trim() ? `\n- Budget limit override: €${budgetPerMeal} per meal` : '';
       const people = peopleCount.trim() ? `\n- Planning for: ${peopleCount} people` : '';
       
-      const promptText = `You are a professional nutritionist for institutional catering. Generate a balanced weekly meal plan.
+      const promptText = `You are a professional nutritionist for institutional catering. Generate a balanced weekly meal plan.${profileContext}
 
 Available meals (JSON format):
 ${mealsData}
@@ -204,8 +259,10 @@ Requirements:
 - 2000-2200 calories per day average
 - Good protein distribution (60-80g/day)
 - Variety of categories (mix mains, vegetarian, sides)
-- Budget conscious (prefer meals under €5)
-- Maximum variety (avoid repeating meals too often)${restrictions}${budget}${people}
+- Budget conscious${profile?.preferences.budgetPerServing ? ` (target $${profile.preferences.budgetPerServing.toFixed(2)}/serving)` : ' (prefer meals under €5)'}
+- Maximum variety (avoid repeating meals too often)
+- IMPORTANT: ${profile?.preferences.allergenExclusions.length ? `Exclude ALL meals containing: ${profile.preferences.allergenExclusions.join(', ')}` : 'No allergen restrictions'}
+- IMPORTANT: ${profile?.preferences.dietaryRestrictions.length ? `Prefer ${profile.preferences.dietaryRestrictions.join(', ')} options` : 'No dietary preference restrictions'}${restrictions}${budget}${people}
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -214,7 +271,7 @@ Return ONLY a JSON object with this exact structure:
       "date": "day_index_0_to_6",
       "mealIds": ["meal_id_1", "meal_id_2"],
       "servings": [2, 1],
-      "reasoning": "Brief explanation why these meals work together"
+      "reasoning": "Brief explanation why these meals work together and align with organization profile"
     }
   ]
 }`;
@@ -283,8 +340,20 @@ Return ONLY a JSON object with this exact structure:
         totalCalories: day.meals.reduce((sum, m) => sum + m.meal.nutritionalInfo.calories * m.servings, 0)
       }));
       
-      const promptText = `You are a professional nutritionist and meal planning assistant.
-
+      let profileContext = '';
+      if (profile) {
+        profileContext = `\nORGANIZATION PROFILE CONTEXT (use to inform recommendations):
+- Organization: ${profile.name}
+- Type: ${profile.type}
+- Serving capacity: ${profile.servingCapacity || 'Not specified'} people
+- Dietary preferences: ${profile.preferences.dietaryRestrictions.join(', ') || 'None'}
+- Allergen exclusions (MUST AVOID): ${profile.preferences.allergenExclusions.join(', ') || 'None'}
+- Budget per serving target: ${profile.preferences.budgetPerServing ? `$${profile.preferences.budgetPerServing.toFixed(2)}` : 'Not specified'}
+- Special requirements: ${profile.preferences.specialRequirements || 'None'}
+`;
+      }
+      
+      const promptText = `You are a professional nutritionist and meal planning assistant.${profileContext}
 Current meal plan:
 ${JSON.stringify(currentPlanSummary)}
 
@@ -293,17 +362,23 @@ ${mealsData}
 
 User request: ${customPrompt}
 
-Based on the user's request, generate appropriate meal suggestions. Return ONLY a JSON object with this structure:
+IMPORTANT: When suggesting meals:
+${profile?.preferences.allergenExclusions.length ? `- EXCLUDE any meals with these allergens: ${profile.preferences.allergenExclusions.join(', ')}` : ''}
+${profile?.preferences.dietaryRestrictions.length ? `- PREFER meals tagged as: ${profile.preferences.dietaryRestrictions.join(', ')}` : ''}
+${profile?.preferences.budgetPerServing ? `- CONSIDER budget target of $${profile.preferences.budgetPerServing.toFixed(2)}/serving` : ''}
+${profile?.preferences.specialRequirements ? `- CONSIDER: ${profile.preferences.specialRequirements}` : ''}
+
+Based on the user's request and organization profile, generate appropriate meal suggestions. Return ONLY a JSON object with this structure:
 {
   "days": [
     {
       "date": "day_index_0_to_6",
       "mealIds": ["meal_id_1", "meal_id_2"],
       "servings": [2, 1],
-      "reasoning": "Brief explanation why these meals address the user's request"
+      "reasoning": "Brief explanation why these meals address the user's request and align with profile"
     }
   ],
-  "summary": "Brief summary of changes made to address the request"
+  "summary": "Brief summary of changes made to address the request considering organization context"
 }
 
 If the request is about specific days, only modify those days. If it's about the whole week, modify all days.`;
@@ -345,7 +420,15 @@ If the request is about specific days, only modify those days. If it's about the
   };
 
   const suggestHighCalorieMeals = () => {
-    const highCalMeals = MOCK_MEALS.filter(m => m.nutritionalInfo.calories > 600)
+    let highCalMeals = MOCK_MEALS.filter(m => m.nutritionalInfo.calories > 600);
+    
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      highCalMeals = highCalMeals.filter(m => 
+        !m.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+    
+    highCalMeals = highCalMeals
       .sort((a, b) => b.nutritionalInfo.calories - a.nutritionalInfo.calories)
       .slice(0, 3);
     
@@ -353,7 +436,15 @@ If the request is about specific days, only modify those days. If it's about the
   };
 
   const suggestLighterMeals = () => {
-    const lightMeals = MOCK_MEALS.filter(m => m.nutritionalInfo.calories < 400)
+    let lightMeals = MOCK_MEALS.filter(m => m.nutritionalInfo.calories < 400);
+    
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      lightMeals = lightMeals.filter(m => 
+        !m.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+    
+    lightMeals = lightMeals
       .sort((a, b) => a.nutritionalInfo.calories - b.nutritionalInfo.calories)
       .slice(0, 3);
     
@@ -361,7 +452,15 @@ If the request is about specific days, only modify those days. If it's about the
   };
 
   const suggestProteinMeals = () => {
-    const proteinMeals = MOCK_MEALS.filter(m => m.nutritionalInfo.protein > 25)
+    let proteinMeals = MOCK_MEALS.filter(m => m.nutritionalInfo.protein > 25);
+    
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      proteinMeals = proteinMeals.filter(m => 
+        !m.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+    
+    proteinMeals = proteinMeals
       .sort((a, b) => b.nutritionalInfo.protein - a.nutritionalInfo.protein)
       .slice(0, 3);
     
@@ -373,14 +472,29 @@ If the request is about specific days, only modify those days. If it's about the
       plan.days.flatMap(day => day.meals.map(m => m.meal.id))
     );
     
-    const newMeals = MOCK_MEALS.filter(m => !existingMealIds.has(m.id))
-      .slice(0, 3);
+    let newMeals = MOCK_MEALS.filter(m => !existingMealIds.has(m.id));
+    
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      newMeals = newMeals.filter(m => 
+        !m.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+    
+    newMeals = newMeals.slice(0, 3);
     
     toast.success(`Try: ${newMeals.map(m => m.name).join(', ')}`);
   };
 
   const suggestBudgetMeals = () => {
-    const budgetMeals = MOCK_MEALS.filter(m => m.price < 4)
+    let budgetMeals = MOCK_MEALS.filter(m => m.price < 4);
+    
+    if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
+      budgetMeals = budgetMeals.filter(m => 
+        !m.allergens.some(a => profile.preferences.allergenExclusions.includes(a))
+      );
+    }
+    
+    budgetMeals = budgetMeals
       .sort((a, b) => a.price - b.price)
       .slice(0, 3);
     
@@ -389,6 +503,64 @@ If the request is about specific days, only modify those days. If it's about the
 
   return (
     <div className="space-y-4">
+      {profile && (
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              Organization Profile Active
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <span className="font-medium">Organization:</span> {profile.name}
+              </div>
+              <div>
+                <span className="font-medium">Type:</span> {profile.type}
+              </div>
+              {profile.servingCapacity && (
+                <div>
+                  <span className="font-medium">Capacity:</span> {profile.servingCapacity} people
+                </div>
+              )}
+              {profile.preferences.budgetPerServing && (
+                <div>
+                  <span className="font-medium">Budget:</span> ${profile.preferences.budgetPerServing.toFixed(2)}/serving
+                </div>
+              )}
+            </div>
+            {profile.preferences.allergenExclusions.length > 0 && (
+              <div className="flex items-start gap-2 mt-3 pt-3 border-t">
+                <Warning className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" weight="fill" />
+                <div>
+                  <span className="font-medium text-destructive">Allergen Exclusions:</span>{' '}
+                  <span className="text-muted-foreground">
+                    {profile.preferences.allergenExclusions.join(', ')}
+                  </span>
+                </div>
+              </div>
+            )}
+            {profile.preferences.dietaryRestrictions.length > 0 && (
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" weight="fill" />
+                <div>
+                  <span className="font-medium text-success">Dietary Preferences:</span>{' '}
+                  <span className="text-muted-foreground">
+                    {profile.preferences.dietaryRestrictions.join(', ')}
+                  </span>
+                </div>
+              </div>
+            )}
+            {profile.preferences.specialRequirements && (
+              <div className="text-xs text-muted-foreground italic mt-2">
+                {profile.preferences.specialRequirements}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -396,7 +568,7 @@ If the request is about specific days, only modify those days. If it's about the
             AI Meal Planning Assistant
           </CardTitle>
           <CardDescription>
-            Get intelligent suggestions to optimize your meal plan for nutrition, variety, and budget
+            Get intelligent suggestions to optimize your meal plan for nutrition, variety, and budget{profile ? ` tailored for ${profile.name}` : ''}
           </CardDescription>
         </CardHeader>
         <CardContent>
