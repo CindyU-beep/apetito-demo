@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkle, TrendUp, Warning, CheckCircle, Lightning, MagicWand, Brain, ChartBar, Users } from '@phosphor-icons/react';
+import { Sparkle, TrendUp, Warning, CheckCircle, Lightning, MagicWand, Brain, ChartBar, Users, Microphone, Stop } from '@phosphor-icons/react';
 import { MealPlan, PlannedMeal, Meal, OrganizationProfile } from '@/lib/types';
 import { MOCK_MEALS } from '@/lib/mockData';
 import { toast } from 'sonner';
@@ -48,6 +48,70 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
   const [peopleCount, setPeopleCount] = useState(profile?.servings?.toString() || '50');
   const [dietaryRestrictions, setDietaryRestrictions] = useState('');
   const [budgetPerMeal, setBudgetPerMeal] = useState(profile?.preferences.budgetPerServing?.toString() || '');
+  const [isListening, setIsListening] = useState(false);
+  const [isVoiceSupported, setIsVoiceSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setIsVoiceSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setCustomPrompt(transcript);
+        toast.success('Voice recognized! Review and submit.');
+      };
+      
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        if (event.error === 'no-speech') {
+          toast.error('No speech detected. Try again.');
+        } else if (event.error === 'not-allowed') {
+          toast.error('Microphone access denied. Enable it in browser settings.');
+        } else {
+          toast.error('Voice recognition error. Try again.');
+        }
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const startVoiceSearch = () => {
+    if (!isVoiceSupported || !recognitionRef.current) {
+      toast.error('Voice search is not supported in this browser');
+      return;
+    }
+    
+    setIsListening(true);
+    setCustomPrompt('');
+    toast.info('Listening... Speak your meal plan request');
+    
+    try {
+      recognitionRef.current.start();
+    } catch (error) {
+      console.error('Error starting voice recognition:', error);
+      setIsListening(false);
+      toast.error('Failed to start voice recognition');
+    }
+  };
+
+  const stopVoiceSearch = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+  };
 
   const analyzeMealPlan = async () => {
     setIsAnalyzing(true);
@@ -972,15 +1036,43 @@ If the request is about specific days, only modify those days. If it's about the
 
             <TabsContent value="custom" className="space-y-4 mt-4">
               <div className="space-y-3">
-                <Label htmlFor="custom-prompt">What would you like to change?</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="custom-prompt">What would you like to change?</Label>
+                  {isVoiceSupported && (
+                    <Button
+                      variant={isListening ? "destructive" : "outline"}
+                      size="sm"
+                      onClick={isListening ? stopVoiceSearch : startVoiceSearch}
+                      className="flex items-center gap-2"
+                    >
+                      {isListening ? (
+                        <>
+                          <Stop className="w-4 h-4" weight="fill" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Microphone className="w-4 h-4" weight="fill" />
+                          Voice Search
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
                 <Textarea
                   id="custom-prompt"
                   placeholder="Examples:&#10;- Make Monday and Tuesday lighter&#10;- Add more protein-rich meals&#10;- Include more vegetarian options&#10;- Swap out meals with nuts&#10;- Make Friday special with higher-end meals"
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   rows={5}
-                  className="resize-none"
+                  className={`resize-none ${isListening ? 'border-primary border-2 animate-pulse' : ''}`}
                 />
+                {isListening && (
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    Listening... Speak now
+                  </div>
+                )}
               </div>
 
               <Button
@@ -1003,7 +1095,7 @@ If the request is about specific days, only modify those days. If it's about the
               </Button>
 
               <div className="text-xs text-muted-foreground text-center pt-2">
-                Describe any changes you want and AI will adjust your meal plan
+                {isVoiceSupported ? 'Type or speak your request and AI will adjust your meal plan' : 'Describe any changes you want and AI will adjust your meal plan'}
               </div>
             </TabsContent>
 
