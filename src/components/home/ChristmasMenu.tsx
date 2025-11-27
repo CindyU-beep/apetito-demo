@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Snowflake, Gift, Sparkle, Star, Warning } from '@phosphor-icons/react';
+import { Snowflake, Gift, Star, Warning, ShoppingCart } from '@phosphor-icons/react';
 import { CartItem, Meal, OrganizationProfile } from '@/lib/types';
 import { MOCK_MEALS, MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
-import { SimpleMealCard } from './SimpleMealCard';
 import { toast } from 'sonner';
 import { useKV } from '@github/spark/hooks';
 import { checkAllergenViolation } from '@/lib/allergenCheck';
@@ -93,121 +92,75 @@ export function ChristmasMenu({ onAddToCart }: ChristmasMenuProps) {
     ['meal-15', 'meal-16', 'meal-12', 'meal-20', 'meal-9', 'meal-7'].includes(m.id)
   );
 
-  const featuredMeal = christmasMeals[0];
-  const otherMeals = christmasMeals.slice(1);
-
   return (
-    <section className="space-y-6">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-            <Snowflake className="w-6 h-6 text-blue-600" weight="fill" />
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Snowflake className="w-5 h-5 text-red-600" weight="fill" />
             Christmas Menu 2024
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Festive traditional classics perfect for the holiday season
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Festive traditional classics
           </p>
         </div>
-        <Badge className="bg-gradient-to-r from-red-500 to-green-500 text-white gap-1 px-3 py-1">
+        <Badge className="bg-gradient-to-r from-red-600 to-green-600 text-white gap-1 px-2.5 py-0.5 text-xs">
           <Gift className="w-3 h-3" weight="fill" />
-          Limited Time
+          Limited
         </Badge>
       </div>
 
-      <div className="relative rounded-xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-green-50 opacity-50" />
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-30 -z-10" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-green-100 rounded-full blur-3xl opacity-30 -z-10" />
-        
-        <Card className="relative border-2 border-red-200 shadow-lg bg-white/80 backdrop-blur-sm">
-          <div className="p-8">
-            {featuredMeal && (
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <div className="relative rounded-lg overflow-hidden shadow-xl">
-                  <Badge className="absolute top-4 left-4 z-10 bg-accent text-accent-foreground shadow-md gap-1">
-                    <Star className="w-3 h-3" weight="fill" />
-                    Featured
-                  </Badge>
-                  <img 
-                    src={featuredMeal.imageUrl} 
-                    alt={featuredMeal.name}
-                    className="w-full h-80 object-cover"
+      <Card className="border border-border overflow-hidden">
+        <div className="p-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {christmasMeals.map((meal, idx) => (
+              <Card 
+                key={meal.id} 
+                className="overflow-hidden hover:shadow-md transition-all hover:scale-[1.02] border border-border group"
+              >
+                <div className="relative h-32">
+                  {idx === 0 && (
+                    <Badge className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs gap-1 px-1.5 py-0.5">
+                      <Star className="w-2.5 h-2.5" weight="fill" />
+                      Featured
+                    </Badge>
+                  )}
+                  <img
+                    src={meal.imageUrl}
+                    alt={meal.name}
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex flex-col justify-center space-y-4">
+                
+                <div className="p-3 space-y-2">
                   <div>
-                    <Badge className="mb-3 bg-red-500 text-white">
-                      <Snowflake className="w-3 h-3 mr-1" weight="fill" />
-                      Christmas Special
-                    </Badge>
-                    <h3 className="text-3xl font-bold text-foreground mb-2">
-                      {featuredMeal.name}
+                    <h3 className="font-semibold text-sm line-clamp-2 leading-tight min-h-[2.5rem]">
+                      {meal.name}
                     </h3>
-                    <p className="text-muted-foreground">
-                      {featuredMeal.description}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Price per serving</p>
-                      <p className="text-3xl font-bold text-primary">
-                        £{featuredMeal.price.toFixed(2)}
-                      </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-muted-foreground">
+                        {meal.nutritionalInfo.calories} kcal
+                      </span>
+                      <span className="text-sm font-bold text-primary">
+                        £{meal.price.toFixed(2)}
+                      </span>
                     </div>
                   </div>
 
-                  {featuredMeal.nutritionalInfo && (
-                    <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Calories</p>
-                        <p className="font-semibold">{featuredMeal.nutritionalInfo.calories}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Protein</p>
-                        <p className="font-semibold">{featuredMeal.nutritionalInfo.protein}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Carbs</p>
-                        <p className="font-semibold">{featuredMeal.nutritionalInfo.carbs}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <Button 
-                    size="lg" 
-                    onClick={() => handleAddMeal(featuredMeal)}
-                    className="w-full gap-2 bg-gradient-to-r from-red-600 to-green-600 hover:from-red-700 hover:to-green-700"
+                  <Button
+                    onClick={() => handleAddMeal(meal)}
+                    className="w-full h-8 text-xs gap-1.5"
+                    size="sm"
                   >
-                    <Gift className="w-5 h-5" weight="fill" />
-                    Add to Cart
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Add
                   </Button>
                 </div>
-              </div>
-            )}
-
-            <div className="border-t pt-8">
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkle className="w-5 h-5 text-accent" weight="fill" />
-                <h4 className="text-xl font-semibold text-foreground">
-                  Complete Your Christmas Menu
-                </h4>
-              </div>
-              
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {otherMeals.map((meal) => (
-                  <div key={meal.id} className="relative">
-                    <SimpleMealCard
-                      meal={meal}
-                      onAddToCart={handleAddMeal}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+              </Card>
+            ))}
           </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
 
       <AlertDialog open={!!pendingMeal} onOpenChange={(open) => !open && cancelAddMeal()}>
         <AlertDialogContent>
