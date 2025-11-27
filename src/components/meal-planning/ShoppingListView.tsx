@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { MealPlan, CartItem } from '@/lib/types';
-import { ShoppingCart, ListChecks, MagnifyingGlass, Package } from '@phosphor-icons/react';
+import { MealPlan, CartItem, Product } from '@/lib/types';
+import { ShoppingCart, ListChecks, MagnifyingGlass, Package, Check } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -86,17 +86,65 @@ export function ShoppingListView({ plan, onAddToCart }: ShoppingListViewProps) {
     0
   );
 
+  const handlePlaceOrder = () => {
+    consolidatedMeals.forEach((meal) => {
+      const mealData = plan.days
+        .flatMap(day => day.meals)
+        .find(plannedMeal => plannedMeal.meal.id === meal.id);
+
+      if (mealData) {
+        const product: Product = {
+          id: mealData.meal.id,
+          sku: `MEAL-${mealData.meal.id}`,
+          name: mealData.meal.name,
+          description: mealData.meal.description,
+          category: mealData.meal.category,
+          price: mealData.meal.price,
+          unit: `per portion (${mealData.meal.servingSize})`,
+          imageUrl: mealData.meal.imageUrl,
+          allergens: mealData.meal.allergens,
+          nutritionalInfo: mealData.meal.nutritionalInfo,
+          inStock: true,
+          sustainability: mealData.meal.sustainability,
+          foodSafety: mealData.meal.foodSafety,
+        };
+
+        const cartItem: CartItem = {
+          product,
+          quantity: meal.totalServings,
+        };
+
+        onAddToCart(cartItem);
+      }
+    });
+
+    toast.success(`${consolidatedMeals.length} meals added to cart! Total: €${totalCost.toFixed(2)}`);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ListChecks className="w-5 h-5" />
-            Meal Plan Summary
-          </CardTitle>
-          <CardDescription>
-            Overview of all meals and servings in this plan
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ListChecks className="w-5 h-5" />
+                Meal Plan Summary
+              </CardTitle>
+              <CardDescription>
+                Overview of all meals and servings in this plan
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={handlePlaceOrder}
+              disabled={consolidatedMeals.length === 0}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Place Order
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
