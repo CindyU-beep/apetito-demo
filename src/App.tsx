@@ -1,12 +1,13 @@
 import { useKV } from '@github/spark/hooks';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChatsCircle, ShoppingCart, ClockCounterClockwise } from '@phosphor-icons/react';
+import { ChatsCircle, ShoppingCart, ClockCounterClockwise, Calendar } from '@phosphor-icons/react';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { BrowseProducts } from '@/components/products/BrowseProducts';
 import { OrderHistory } from '@/components/orders/OrderHistory';
 import { CartPanel } from '@/components/cart/CartPanel';
 import { Header } from '@/components/layout/Header';
+import { MealPlanner } from '@/components/meal-planning/MealPlanner';
 import { CartItem, Message } from '@/lib/types';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -62,7 +63,7 @@ function App() {
       
       <main className="container mx-auto px-4 md:px-8 lg:px-12 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-6">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-6">
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <ChatsCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Chat</span>
@@ -70,6 +71,10 @@ function App() {
             <TabsTrigger value="browse" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline">Browse</span>
+            </TabsTrigger>
+            <TabsTrigger value="meal-planning" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Meal Plans</span>
             </TabsTrigger>
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <ClockCounterClockwise className="w-4 h-4" />
@@ -87,6 +92,10 @@ function App() {
 
           <TabsContent value="browse" className="mt-0">
             <BrowseProducts onAddToCart={addToCart} />
+          </TabsContent>
+
+          <TabsContent value="meal-planning" className="mt-0">
+            <MealPlanner onAddToCart={addToCart} />
           </TabsContent>
 
           <TabsContent value="orders" className="mt-0">

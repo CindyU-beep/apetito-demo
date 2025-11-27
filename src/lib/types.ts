@@ -70,3 +70,34 @@ export type OrderHistory = {
   total: number;
   status: 'completed' | 'pending' | 'cancelled';
 };
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export type PlannedMeal = {
+  id: string;
+  name: string;
+  mealType: MealType;
+  servings: number;
+  ingredients: RecipeIngredient[];
+  notes?: string;
+  nutritionalTotals?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+};
+
+export type DayPlan = {
+  date: string;
+  meals: PlannedMeal[];
+};
+
+export type MealPlan = {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  days: DayPlan[];
+  createdAt: number;
+};

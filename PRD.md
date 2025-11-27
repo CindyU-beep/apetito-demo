@@ -47,6 +47,13 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Progression**: User adds items → System suggests bulk quantities & pricing tiers → Displays total with institutional discounts → User sets delivery schedule → Reviews compliance summary → Confirms order → Receives confirmation with allergen report
 - **Success criteria**: Clear display of volume discounts; delivery scheduling reduces repeat ordering time by 50%
 
+### Meal Planning & Menu Management
+- **Functionality**: Weekly meal planning interface with drag-and-drop calendar, recipe ingredient extraction, and automatic shopping list generation
+- **Purpose**: Enable institutional buyers to plan weekly menus in advance, visualize nutritional totals across days, and automatically convert meal plans into consolidated procurement orders
+- **Trigger**: User navigates to "Meal Plans" tab; clicks "Create New Meal Plan" or selects existing plan
+- **Progression**: User creates weekly plan → Adds meals to specific days with meal type (breakfast/lunch/dinner/snack) → AI generates ingredient suggestions based on meal name → User reviews ingredients and servings → System consolidates all ingredients across week → Matches ingredients to available products → User checks off items and adds matched products to cart
+- **Success criteria**: Meal plans persist across sessions; ingredient matching achieves 70%+ accuracy; consolidated shopping lists reduce duplicate ordering; nutritional totals display correctly per day
+
 ## Edge Case Handling
 
 - **Unknown Ingredients**: AI requests clarification or suggests closest matches with confidence scores
@@ -54,6 +61,9 @@ Streamline institutional foodservice procurement through an intelligent, convers
 - **Ambiguous Allergen Data**: Display "unverified" status with contact option for manual verification
 - **Recipe Parsing Failures**: Graceful fallback to manual ingredient entry with AI-assisted autocomplete
 - **Complex Dietary Restrictions**: Multi-filter support (vegan + gluten-free + nut-free) with clear "no matches" messaging
+- **Unmatched Ingredients**: When meal plan ingredients don't match products, display clear "manual search needed" status with search shortcuts
+- **Empty Meal Plans**: Guide users to create first plan with clear benefits and example use cases
+- **Overlapping Meal Plans**: Allow multiple plans but clearly indicate which is "active" for shopping list generation
 - **Large Orders**: Performance optimization with progressive loading and cart summarization
 - **Offline Mode**: Queue actions locally with sync indicators and retry logic
 
@@ -142,6 +152,8 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 - **Chat Message Component**: Custom layout with Avatar + animation states for AI vs user messages, with embedded product cards and action buttons
 - **Compliance Summary Panel**: Custom visualization showing allergen matrix, risk levels, and nutritional totals with clear visual hierarchy
 - **Recipe Mapper**: Custom interface showing original recipe → matched products with confidence indicators and manual override options
+- **Weekly Calendar Grid**: Custom meal planning calendar with day cards showing meal type badges, nutritional summaries, and inline meal management
+- **Shopping List Consolidator**: Custom ingredient aggregation view with checkboxes, product matching indicators, and bulk "add to cart" actions
 
 **States**:
 - **Buttons**: Default, Hover (subtle lift + shadow), Active (pressed scale), Loading (spinner), Disabled (reduced opacity)
@@ -155,7 +167,8 @@ Animations should feel purposeful and professional—subtle micro-interactions t
 - **Products**: `ShoppingCart`, `Package`, `Barcode` for SKUs
 - **Allergen/Compliance**: `Warning`, `ShieldCheck`, `FirstAid`, `X` for clearance
 - **Food/Recipe**: `ForkKnife`, `CookingPot`, `ListChecks` for ingredients
-- **Actions**: `Plus`, `Minus`, `TrashSimple`, `ArrowsClockwise` for refresh
+- **Planning**: `Calendar` for meal planning, `Plus` for adding meals, `Trash` for removing
+- **Actions**: `Plus`, `Minus`, `TrashSimple`, `ArrowsClockwise` for refresh, `PencilSimple` for editing
 - **Navigation**: `MagnifyingGlass`, `List`, `ClockCounterClockwise` for history
 - **Data**: `ChartLine`, `DownloadSimple`, `FileText` for reports
 
