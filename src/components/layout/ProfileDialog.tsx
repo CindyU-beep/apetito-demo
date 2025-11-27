@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
 import {
   Dialog,
@@ -7,12 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -20,254 +21,230 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { OrganizationProfile, AllergenType, DietaryPreference, OrderHistory } from '@/lib/types';
-import { X, Building, ShoppingCart, ForkKnife, ShieldWarning } from '@phosphor-icons/react';
+import { OrganizationProfile, DietaryPreference, AllergenType, OrderHistory } from '@/lib/types';
+import { Buildings, Envelope, Phone, MapPin, Users, CurrencyDollar, ClockCounterClockwise, ShieldCheck } from '@phosphor-icons/react';
 import { toast } from 'sonner';
-import { Card } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
 
 type ProfileDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-const ALLERGEN_OPTIONS: { value: AllergenType; label: string }[] = [
-  { value: 'nuts', label: 'Nuts' },
-  { value: 'dairy', label: 'Dairy' },
-  { value: 'gluten', label: 'Gluten' },
-  { value: 'eggs', label: 'Eggs' },
-  { value: 'soy', label: 'Soy' },
-  { value: 'fish', label: 'Fish' },
-  { value: 'shellfish', label: 'Shellfish' },
-  { value: 'sesame', label: 'Sesame' },
-];
-
-const DIETARY_OPTIONS: { value: DietaryPreference; label: string }[] = [
-  { value: 'vegetarian', label: 'Vegetarian' },
-  { value: 'vegan', label: 'Vegan' },
-  { value: 'pescatarian', label: 'Pescatarian' },
-  { value: 'halal', label: 'Halal' },
-  { value: 'kosher', label: 'Kosher' },
-];
-
-const ORGANIZATION_TYPES = [
-  { value: 'hospital', label: 'Hospital' },
-  { value: 'school', label: 'School' },
-  { value: 'care-home', label: 'Care Home' },
-  { value: 'university', label: 'University' },
-  { value: 'corporate', label: 'Corporate' },
-  { value: 'other', label: 'Other' },
-];
-
-const DEFAULT_PROFILE: OrganizationProfile = {
-  id: 'default',
-  name: '',
-  type: 'hospital',
-  contactEmail: '',
-  contactPhone: '',
-  address: '',
-  servingCapacity: undefined,
-  preferences: {
-    dietaryRestrictions: [],
-    allergenExclusions: [],
-    budgetPerServing: undefined,
-    specialRequirements: '',
-  },
-  orderHistory: [],
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
-};
+const ALLERGEN_OPTIONS: AllergenType[] = ['nuts', 'dairy', 'gluten', 'eggs', 'soy', 'fish', 'shellfish', 'sesame'];
+const DIETARY_OPTIONS: DietaryPreference[] = ['vegetarian', 'vegan', 'pescatarian', 'halal', 'kosher'];
+const ORG_TYPES = ['hospital', 'school', 'care-home', 'university', 'corporate', 'other'];
 
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
-  const [profile, setProfile] = useKV<OrganizationProfile>('organization-profile', DEFAULT_PROFILE);
+  const [profile, setProfile] = useKV<OrganizationProfile>('organization-profile', MOCK_ORGANIZATION_PROFILE);
   const [orderHistory] = useKV<OrderHistory[]>('order-history', []);
-  
-  const [formData, setFormData] = useState<OrganizationProfile>(profile || DEFAULT_PROFILE);
+  const [editedProfile, setEditedProfile] = useState<OrganizationProfile>(profile || MOCK_ORGANIZATION_PROFILE);
+
+  useEffect(() => {
+    if (profile) {
+      setEditedProfile(profile);
+    }
+  }, [profile]);
 
   const handleSave = () => {
-    const updated = {
-      ...formData,
-      updatedAt: Date.now(),
-    };
-    setProfile(updated);
-    toast.success('Organization profile updated successfully');
+    setProfile(editedProfile);
+    toast.success('Profile updated successfully');
     onOpenChange(false);
   };
 
-  const toggleAllergen = (allergen: AllergenType) => {
-    setFormData((prev) => ({
+  const handleLoadDefaults = () => {
+    setEditedProfile(MOCK_ORGANIZATION_PROFILE);
+    toast.success('Loaded sample hospital profile');
+  };
+
+  const toggleAllergenExclusion = (allergen: AllergenType) => {
+    setEditedProfile(prev => ({
       ...prev,
       preferences: {
         ...prev.preferences,
         allergenExclusions: prev.preferences.allergenExclusions.includes(allergen)
-          ? prev.preferences.allergenExclusions.filter((a) => a !== allergen)
+          ? prev.preferences.allergenExclusions.filter(a => a !== allergen)
           : [...prev.preferences.allergenExclusions, allergen],
       },
     }));
   };
 
-  const toggleDietaryPref = (pref: DietaryPreference) => {
-    setFormData((prev) => ({
+  const toggleDietaryRestriction = (restriction: DietaryPreference) => {
+    setEditedProfile(prev => ({
       ...prev,
       preferences: {
         ...prev.preferences,
-        dietaryRestrictions: prev.preferences.dietaryRestrictions.includes(pref)
-          ? prev.preferences.dietaryRestrictions.filter((p) => p !== pref)
-          : [...prev.preferences.dietaryRestrictions, pref],
+        dietaryRestrictions: prev.preferences.dietaryRestrictions.includes(restriction)
+          ? prev.preferences.dietaryRestrictions.filter(r => r !== restriction)
+          : [...prev.preferences.dietaryRestrictions, restriction],
       },
     }));
   };
 
-  const recentOrders = (orderHistory || []).slice(0, 5);
-  const totalSpent = (orderHistory || []).reduce((sum, order) => sum + order.total, 0);
+  const totalSpent = (orderHistory || [])
+    .filter(o => o.status === 'completed')
+    .reduce((sum, order) => sum + order.total, 0);
+
   const totalOrders = (orderHistory || []).length;
+  const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Building className="w-5 h-5" />
+            <Buildings className="w-5 h-5 text-primary" weight="fill" />
             Organization Profile
           </DialogTitle>
           <DialogDescription>
-            Manage your organization's details, dietary preferences, and allergen restrictions
+            Manage your organization's information, dietary preferences, and allergen restrictions. This data helps our AI agents provide personalized recommendations.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">Information</TabsTrigger>
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            <TabsTrigger value="history">Order History</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="ai-context">AI Context</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="h-[500px] pr-4">
-            <TabsContent value="info" className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label htmlFor="org-name">Organization Name *</Label>
-                  <Input
-                    id="org-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="St. Mary's Hospital"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="org-type">Organization Type *</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, type: value as OrganizationProfile['type'] })
-                    }
-                  >
-                    <SelectTrigger id="org-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORGANIZATION_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="capacity">Daily Serving Capacity</Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    value={formData.servingCapacity || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, servingCapacity: Number(e.target.value) || undefined })
-                    }
-                    placeholder="500"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Contact Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.contactEmail}
-                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                    placeholder="procurement@hospital.com"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="phone">Contact Phone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.contactPhone || ''}
-                    onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                    placeholder="+1 (555) 123-4567"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={formData.address || ''}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="123 Medical Center Dr, City, State 12345"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="budget">Budget Per Serving ($)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    step="0.01"
-                    value={formData.preferences.budgetPerServing || ''}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        preferences: {
-                          ...formData.preferences,
-                          budgetPerServing: Number(e.target.value) || undefined,
-                        },
-                      })
-                    }
-                    placeholder="5.00"
-                  />
-                </div>
+          <TabsContent value="general" className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="org-name" className="flex items-center gap-2">
+                  <Buildings className="w-4 h-4" />
+                  Organization Name
+                </Label>
+                <Input
+                  id="org-name"
+                  value={editedProfile.name}
+                  onChange={(e) => setEditedProfile(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., St. Mary's Hospital"
+                />
               </div>
-            </TabsContent>
 
-            <TabsContent value="preferences" className="space-y-6 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="org-type">Organization Type</Label>
+                <Select
+                  value={editedProfile.type}
+                  onValueChange={(value: any) => setEditedProfile(prev => ({ ...prev, type: value }))}
+                >
+                  <SelectTrigger id="org-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ORG_TYPES.map(type => (
+                      <SelectItem key={type} value={type} className="capitalize">
+                        {type.replace('-', ' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact-email" className="flex items-center gap-2">
+                <Envelope className="w-4 h-4" />
+                Contact Email
+              </Label>
+              <Input
+                id="contact-email"
+                type="email"
+                value={editedProfile.contactEmail}
+                onChange={(e) => setEditedProfile(prev => ({ ...prev, contactEmail: e.target.value }))}
+                placeholder="contact@organization.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact-phone" className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Contact Phone
+                </Label>
+                <Input
+                  id="contact-phone"
+                  value={editedProfile.contactPhone || ''}
+                  onChange={(e) => setEditedProfile(prev => ({ ...prev, contactPhone: e.target.value }))}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="serving-capacity" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Daily Serving Capacity
+                </Label>
+                <Input
+                  id="serving-capacity"
+                  type="number"
+                  value={editedProfile.servingCapacity || ''}
+                  onChange={(e) => setEditedProfile(prev => ({ ...prev, servingCapacity: parseInt(e.target.value) || undefined }))}
+                  placeholder="e.g., 500"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address" className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Address
+              </Label>
+              <Input
+                id="address"
+                value={editedProfile.address || ''}
+                onChange={(e) => setEditedProfile(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="Street, City, State ZIP"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="budget-per-serving" className="flex items-center gap-2">
+                <CurrencyDollar className="w-4 h-4" />
+                Target Budget per Serving
+              </Label>
+              <Input
+                id="budget-per-serving"
+                type="number"
+                step="0.01"
+                value={editedProfile.preferences.budgetPerServing || ''}
+                onChange={(e) => setEditedProfile(prev => ({
+                  ...prev,
+                  preferences: {
+                    ...prev.preferences,
+                    budgetPerServing: parseFloat(e.target.value) || undefined,
+                  },
+                }))}
+                placeholder="e.g., 3.50"
+              />
+            </div>
+
+            <Button onClick={handleLoadDefaults} variant="outline" className="w-full">
+              Load Sample Hospital Profile
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="preferences" className="space-y-4 mt-4">
+            <div className="space-y-3">
               <div>
                 <Label className="flex items-center gap-2 mb-3">
-                  <ShieldWarning className="w-4 h-4" />
+                  <ShieldCheck className="w-4 h-4" />
                   Allergen Exclusions
                 </Label>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Select allergens to exclude from all meal suggestions
+                <p className="text-xs text-muted-foreground mb-3">
+                  Select allergens to exclude from all product recommendations
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {ALLERGEN_OPTIONS.map((allergen) => (
+                  {ALLERGEN_OPTIONS.map(allergen => (
                     <Badge
-                      key={allergen.value}
-                      variant={
-                        formData.preferences.allergenExclusions.includes(allergen.value)
-                          ? 'default'
-                          : 'outline'
-                      }
-                      className="cursor-pointer hover:bg-primary/10"
-                      onClick={() => toggleAllergen(allergen.value)}
+                      key={allergen}
+                      variant={editedProfile.preferences.allergenExclusions.includes(allergen) ? 'default' : 'outline'}
+                      className="cursor-pointer capitalize px-3 py-1.5"
+                      onClick={() => toggleAllergenExclusion(allergen)}
                     >
-                      {allergen.label}
-                      {formData.preferences.allergenExclusions.includes(allergen.value) && (
-                        <X className="w-3 h-3 ml-1" />
-                      )}
+                      {allergen}
                     </Badge>
                   ))}
                 </div>
@@ -275,129 +252,187 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 
               <div>
                 <Label className="flex items-center gap-2 mb-3">
-                  <ForkKnife className="w-4 h-4" />
-                  Dietary Preferences
+                  <ShieldCheck className="w-4 h-4" />
+                  Dietary Restrictions
                 </Label>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-xs text-muted-foreground mb-3">
                   Select dietary preferences for your organization
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {DIETARY_OPTIONS.map((pref) => (
+                  {DIETARY_OPTIONS.map(dietary => (
                     <Badge
-                      key={pref.value}
-                      variant={
-                        formData.preferences.dietaryRestrictions.includes(pref.value)
-                          ? 'default'
-                          : 'outline'
-                      }
-                      className="cursor-pointer hover:bg-primary/10"
-                      onClick={() => toggleDietaryPref(pref.value)}
+                      key={dietary}
+                      variant={editedProfile.preferences.dietaryRestrictions.includes(dietary) ? 'default' : 'outline'}
+                      className="cursor-pointer capitalize px-3 py-1.5"
+                      onClick={() => toggleDietaryRestriction(dietary)}
                     >
-                      {pref.label}
-                      {formData.preferences.dietaryRestrictions.includes(pref.value) && (
-                        <X className="w-3 h-3 ml-1" />
-                      )}
+                      {dietary}
                     </Badge>
                   ))}
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="special-requirements">Special Requirements</Label>
                 <Textarea
                   id="special-requirements"
-                  value={formData.preferences.specialRequirements || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      preferences: {
-                        ...formData.preferences,
-                        specialRequirements: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="E.g., Texture-modified diets for elderly patients, low-sodium requirements, cultural preferences..."
+                  value={editedProfile.preferences.specialRequirements || ''}
+                  onChange={(e) => setEditedProfile(prev => ({
+                    ...prev,
+                    preferences: {
+                      ...prev.preferences,
+                      specialRequirements: e.target.value,
+                    },
+                  }))}
+                  placeholder="e.g., Halal certification required, organic ingredients preferred, etc."
                   rows={4}
                 />
               </div>
-            </TabsContent>
+            </div>
+          </TabsContent>
 
-            <TabsContent value="history" className="space-y-4 mt-4">
-              <div className="grid grid-cols-3 gap-4">
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <ShoppingCart className="w-4 h-4" />
-                    <span className="text-xs">Total Orders</span>
-                  </div>
-                  <p className="text-2xl font-bold">{totalOrders}</p>
-                </Card>
+          <TabsContent value="history" className="space-y-4 mt-4">
+            <div className="grid grid-cols-3 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <ClockCounterClockwise className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Total Orders</span>
+                </div>
+                <p className="text-2xl font-bold">{totalOrders}</p>
+              </Card>
 
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <ShoppingCart className="w-4 h-4" />
-                    <span className="text-xs">Total Spent</span>
-                  </div>
-                  <p className="text-2xl font-bold">${totalSpent.toFixed(2)}</p>
-                </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CurrencyDollar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Total Spent</span>
+                </div>
+                <p className="text-2xl font-bold">${totalSpent.toFixed(2)}</p>
+              </Card>
 
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <ShoppingCart className="w-4 h-4" />
-                    <span className="text-xs">Avg Order</span>
-                  </div>
-                  <p className="text-2xl font-bold">
-                    ${totalOrders > 0 ? (totalSpent / totalOrders).toFixed(2) : '0.00'}
-                  </p>
-                </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CurrencyDollar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Avg Order</span>
+                </div>
+                <p className="text-2xl font-bold">${avgOrderValue.toFixed(2)}</p>
+              </Card>
+            </div>
+
+            {(orderHistory || []).length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ClockCounterClockwise className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No order history yet</p>
+                <p className="text-xs mt-1">Complete orders to see your purchase history</p>
               </div>
-
-              <div>
-                <h3 className="font-semibold mb-3">Recent Orders</h3>
-                {recentOrders.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No order history yet. Complete your first order to see it here.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {recentOrders.map((order) => (
-                      <Card key={order.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(order.date).toLocaleDateString()} • {order.items.length} items
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold">${order.total.toFixed(2)}</p>
-                            <Badge
-                              variant={
-                                order.status === 'completed'
-                                  ? 'default'
-                                  : order.status === 'pending'
-                                  ? 'secondary'
-                                  : 'destructive'
-                              }
-                              className="text-xs"
-                            >
-                              {order.status}
-                            </Badge>
-                          </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Recent Orders</Label>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {(orderHistory || []).slice(0, 10).map(order => (
+                    <Card key={order.id} className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(order.date).toLocaleDateString()} • {order.items.length} items
+                          </p>
                         </div>
-                      </Card>
-                    ))}
+                        <div className="text-right">
+                          <p className="font-bold">${order.total.toFixed(2)}</p>
+                          <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className="text-xs capitalize">
+                            {order.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="ai-context" className="space-y-4 mt-4">
+            <Card className="p-4 bg-primary/5">
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary" />
+                How AI Uses Your Profile
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Our multi-agent AI system uses your profile to provide personalized recommendations:
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span><strong>Budget Agent:</strong> Considers your budget per serving (${editedProfile.preferences.budgetPerServing?.toFixed(2) || 'not set'}) and serving capacity ({editedProfile.servingCapacity || 'not set'}) to optimize costs</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span><strong>Dietary Agent:</strong> Automatically filters out {editedProfile.preferences.allergenExclusions.length} allergen(s) and accommodates {editedProfile.preferences.dietaryRestrictions.length} dietary restriction(s)</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span><strong>Nutrition Agent:</strong> Tailors recommendations based on your organization type ({editedProfile.type})</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span><strong>Meal Planning Agent:</strong> Creates menus that respect all your preferences and requirements</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span><strong>Order History:</strong> Learns from your {totalOrders} previous order(s) to suggest familiar products</span>
+                </li>
+              </ul>
+            </Card>
+
+            <Card className="p-4">
+              <h3 className="font-semibold mb-3">Current Profile Summary</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Organization:</span>
+                  <p className="font-medium">{editedProfile.name || 'Not set'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Type:</span>
+                  <p className="font-medium capitalize">{editedProfile.type.replace('-', ' ')}</p>
+                </div>
+                {editedProfile.preferences.allergenExclusions.length > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Allergen Exclusions:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {editedProfile.preferences.allergenExclusions.map(a => (
+                        <Badge key={a} variant="destructive" className="text-xs capitalize">{a}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {editedProfile.preferences.dietaryRestrictions.length > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Dietary Restrictions:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {editedProfile.preferences.dietaryRestrictions.map(d => (
+                        <Badge key={d} variant="secondary" className="text-xs capitalize">{d}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {editedProfile.preferences.specialRequirements && (
+                  <div>
+                    <span className="text-muted-foreground">Special Requirements:</span>
+                    <p className="font-medium mt-1">{editedProfile.preferences.specialRequirements}</p>
                   </div>
                 )}
               </div>
-            </TabsContent>
-          </ScrollArea>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button onClick={handleSave}>
+            Save Profile
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

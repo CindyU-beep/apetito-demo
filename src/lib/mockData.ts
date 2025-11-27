@@ -1,4 +1,4 @@
-import { Product, Meal } from './types';
+import { Product, Meal, OrganizationProfile, OrderHistory } from './types';
 
 export const MOCK_PRODUCTS: Product[] = [
   {
@@ -298,6 +298,84 @@ export const AGENT_CONVERSATION_STARTERS: Record<string, string[]> = {
     "Show me complete dinner recipes",
     "I need ingredients for pasta dishes",
   ],
+};
+
+export const MOCK_ORDER_HISTORY: OrderHistory[] = [
+  {
+    id: 'order-001',
+    date: Date.now() - 30 * 24 * 60 * 60 * 1000,
+    items: [
+      {
+        product: MOCK_PRODUCTS[0],
+        quantity: 10,
+      },
+      {
+        product: MOCK_PRODUCTS[1],
+        quantity: 12,
+      },
+      {
+        product: MOCK_PRODUCTS[6],
+        quantity: 5,
+      },
+    ],
+    total: 1289.90,
+    status: 'completed',
+  },
+  {
+    id: 'order-002',
+    date: Date.now() - 15 * 24 * 60 * 60 * 1000,
+    items: [
+      {
+        product: MOCK_PRODUCTS[8],
+        quantity: 15,
+      },
+      {
+        product: MOCK_PRODUCTS[10],
+        quantity: 8,
+      },
+      {
+        product: MOCK_PRODUCTS[4],
+        quantity: 4,
+      },
+    ],
+    total: 746.00,
+    status: 'completed',
+  },
+  {
+    id: 'order-003',
+    date: Date.now() - 7 * 24 * 60 * 60 * 1000,
+    items: [
+      {
+        product: MOCK_PRODUCTS[2],
+        quantity: 6,
+      },
+      {
+        product: MOCK_PRODUCTS[11],
+        quantity: 6,
+      },
+    ],
+    total: 420.00,
+    status: 'completed',
+  },
+];
+
+export const MOCK_ORGANIZATION_PROFILE: OrganizationProfile = {
+  id: 'org-001',
+  name: "St. Mary's Regional Hospital",
+  type: 'hospital',
+  contactEmail: 'procurement@stmarys-hospital.com',
+  contactPhone: '+1 (555) 234-5678',
+  address: '1234 Healthcare Drive, Medical District, CA 90210',
+  servingCapacity: 450,
+  preferences: {
+    dietaryRestrictions: ['vegetarian'],
+    allergenExclusions: ['nuts', 'shellfish'],
+    budgetPerServing: 3.75,
+    specialRequirements: 'Halal certification required for all meat products. Prefer organic produce when available. Must meet hospital dietary standards for patient meals.',
+  },
+  orderHistory: MOCK_ORDER_HISTORY,
+  createdAt: Date.now() - 180 * 24 * 60 * 60 * 1000,
+  updatedAt: Date.now(),
 };
 
 export const MOCK_MEALS: Meal[] = [

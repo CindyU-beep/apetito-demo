@@ -1,5 +1,5 @@
 import { useKV } from '@github/spark/hooks';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { HomePage } from '@/components/home/HomePage';
 import { BrowseProducts } from '@/components/products/BrowseProducts';
@@ -8,13 +8,25 @@ import { CartPanel } from '@/components/cart/CartPanel';
 import { Header } from '@/components/layout/Header';
 import { MealPlanner } from '@/components/meal-planning/MealPlanner';
 import { ChatbotPopup } from '@/components/chat/ChatbotPopup';
-import { CartItem } from '@/lib/types';
+import { CartItem, OrganizationProfile, OrderHistory as OrderHistoryType } from '@/lib/types';
 import { Toaster } from '@/components/ui/sonner';
+import { MOCK_ORGANIZATION_PROFILE, MOCK_ORDER_HISTORY } from '@/lib/mockData';
 
 function App() {
   const [cart, setCart] = useKV<CartItem[]>('cart', []);
+  const [profile, setProfile] = useKV<OrganizationProfile>('organization-profile', MOCK_ORGANIZATION_PROFILE);
+  const [orderHistory, setOrderHistory] = useKV<OrderHistoryType[]>('order-history', MOCK_ORDER_HISTORY);
   const [activeTab, setActiveTab] = useState('home');
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    if (!profile || !profile.name) {
+      setProfile(MOCK_ORGANIZATION_PROFILE);
+    }
+    if (!orderHistory || orderHistory.length === 0) {
+      setOrderHistory(MOCK_ORDER_HISTORY);
+    }
+  }, [profile, orderHistory, setProfile, setOrderHistory]);
 
   const addToCart = (item: CartItem) => {
     setCart((currentCart = []) => {
