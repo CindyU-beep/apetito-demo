@@ -72,7 +72,7 @@ export function QuickReorder({ orderHistory, onAddToCart }: QuickReorderProps) {
                     Order #{order.id.slice(0, 8)}
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    {orderDate.toLocaleDateString('de-DE', { 
+                    {orderDate.toLocaleDateString('en-GB', { 
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric'

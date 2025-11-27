@@ -42,8 +42,8 @@ export function PredictiveOrdering({ orderHistory, onAddToCart }: PredictiveOrde
     if (isWinter) {
       const winterMeals = MOCK_MEALS.filter(m => 
         m.category === 'Main' || 
-        m.name.includes('Braten') || 
-        m.name.includes('Kartoffel')
+        m.name.toLowerCase().includes('roast') || 
+        m.name.toLowerCase().includes('potato')
       ).slice(0, 2);
       
       winterMeals.forEach(meal => {
