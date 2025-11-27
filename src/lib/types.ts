@@ -197,7 +197,7 @@ export type OrganizationProfile = {
   contactEmail: string;
   contactPhone?: string;
   address?: string;
-  servingCapacity?: number;
+  servings?: number;
   preferences: {
     dietaryRestrictions: DietaryPreference[];
     allergenExclusions: AllergenType[];

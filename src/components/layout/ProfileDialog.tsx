@@ -173,15 +173,15 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="serving-capacity" className="flex items-center gap-2">
+                <Label htmlFor="servings" className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  Daily Serving Capacity
+                  Daily Servings
                 </Label>
                 <Input
-                  id="serving-capacity"
+                  id="servings"
                   type="number"
-                  value={editedProfile.servingCapacity || ''}
-                  onChange={(e) => setEditedProfile(prev => ({ ...prev, servingCapacity: parseInt(e.target.value) || undefined }))}
+                  value={editedProfile.servings || ''}
+                  onChange={(e) => setEditedProfile(prev => ({ ...prev, servings: parseInt(e.target.value) || undefined }))}
                   placeholder="e.g., 500"
                 />
               </div>
@@ -472,7 +472,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
               <ul className="space-y-2 text-sm">
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span><strong>Budget Agent:</strong> Considers your budget per serving (${editedProfile.preferences.budgetPerServing?.toFixed(2) || 'not set'}) and serving capacity ({editedProfile.servingCapacity || 'not set'}) to optimize costs</span>
+                  <span><strong>Budget Agent:</strong> Considers your budget per serving (${editedProfile.preferences.budgetPerServing?.toFixed(2) || 'not set'}) and servings ({editedProfile.servings || 'not set'}) to optimize costs</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>

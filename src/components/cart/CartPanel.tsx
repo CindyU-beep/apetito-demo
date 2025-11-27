@@ -116,7 +116,7 @@ export function CartPanel({
     }
 
     if (profile?.preferences.budgetPerServing) {
-      const servings = profile.servingCapacity || 100;
+      const servings = profile.servings || 100;
       const costPerServing = subtotal / servings;
       if (costPerServing > profile.preferences.budgetPerServing) {
         insights.push(`Over budget: $${costPerServing.toFixed(2)}/serving vs target $${profile.preferences.budgetPerServing.toFixed(2)}`);

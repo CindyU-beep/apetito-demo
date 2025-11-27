@@ -39,7 +39,7 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
         setMealPlans((current = []) =>
           current.map(plan => ({
             ...plan,
-            servingSize: plan.servingSize ?? profile?.servingCapacity ?? 50,
+            servingSize: plan.servingSize ?? profile?.servings ?? 50,
             organizationName: plan.organizationName ?? profile?.name ?? "St. Mary's Regional Hospital",
           }))
         );
@@ -57,7 +57,7 @@ export function MealPlanner({ onAddToCart }: MealPlannerProps) {
       id: `plan-${Date.now()}`,
       name: `Meal Plan - Week of ${format(weekStart, 'MMM d')}`,
       organizationName: profile?.name || "St. Mary's Regional Hospital",
-      servingSize: profile?.servingCapacity || 50,
+      servingSize: profile?.servings || 50,
       startDate: format(weekStart, 'yyyy-MM-dd'),
       endDate: format(weekEnd, 'yyyy-MM-dd'),
       days: Array.from({ length: 7 }, (_, i) => ({

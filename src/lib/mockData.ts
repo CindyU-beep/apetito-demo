@@ -827,7 +827,7 @@ export const MOCK_ORGANIZATION_PROFILE: OrganizationProfile = {
   contactEmail: 'procurement@stmarys-hospital.com',
   contactPhone: '+1 (555) 234-5678',
   address: '1234 Healthcare Drive, Medical District, CA 90210',
-  servingCapacity: 450,
+  servings: 450,
   preferences: {
     dietaryRestrictions: ['vegetarian'],
     allergenExclusions: ['nuts', 'shellfish'],

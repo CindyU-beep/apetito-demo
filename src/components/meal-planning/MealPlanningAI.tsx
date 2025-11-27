@@ -45,7 +45,7 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [nutritionalBalance, setNutritionalBalance] = useState<NutritionalBalance | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
-  const [peopleCount, setPeopleCount] = useState(profile?.servingCapacity?.toString() || '50');
+  const [peopleCount, setPeopleCount] = useState(profile?.servings?.toString() || '50');
   const [dietaryRestrictions, setDietaryRestrictions] = useState('');
   const [budgetPerMeal, setBudgetPerMeal] = useState(profile?.preferences.budgetPerServing?.toString() || '');
 
@@ -237,8 +237,8 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
       }
 
       const targetBudget = profile?.preferences.budgetPerServing || 5;
-      const servingCapacity = profile?.servingCapacity || 50;
-      const avgCostPerServing = balance.costPerDay / servingCapacity;
+      const servings = profile?.servings || 50;
+      const avgCostPerServing = balance.costPerDay / servings;
       
       if (avgCostPerServing > targetBudget * 1.2) {
         newSuggestions.push({
@@ -486,7 +486,7 @@ export function MealPlanningAI({ plan, onApplySuggestions }: MealPlanningAIProps
         profileContext = `\n\nORGANIZATION PROFILE - Use this context to inform your recommendations:
 - Organization: ${profile.name}
 - Type: ${profile.type}
-- Serving capacity: ${profile.servingCapacity || 'Not specified'} people
+- Servings: ${profile.servings || 'Not specified'} people
 - Dietary preferences: ${profile.preferences.dietaryRestrictions.join(', ') || 'None specified'}
 - Allergen exclusions (CRITICAL - exclude these): ${profile.preferences.allergenExclusions.join(', ') || 'None'}
 - Budget per serving: ${profile.preferences.budgetPerServing ? `$${profile.preferences.budgetPerServing.toFixed(2)}` : 'Not specified'}
@@ -607,7 +607,7 @@ Return ONLY a JSON object with this exact structure:
         profileContext = `\nORGANIZATION PROFILE CONTEXT (use to inform recommendations):
 - Organization: ${profile.name}
 - Type: ${profile.type}
-- Serving capacity: ${profile.servingCapacity || 'Not specified'} people
+- Servings: ${profile.servings || 'Not specified'} people
 - Dietary preferences: ${profile.preferences.dietaryRestrictions.join(', ') || 'None'}
 - Allergen exclusions (MUST AVOID): ${profile.preferences.allergenExclusions.join(', ') || 'None'}
 - Budget per serving target: ${profile.preferences.budgetPerServing ? `$${profile.preferences.budgetPerServing.toFixed(2)}` : 'Not specified'}
@@ -824,9 +824,9 @@ If the request is about specific days, only modify those days. If it's about the
               <div>
                 <span className="font-medium">Type:</span> {profile.type}
               </div>
-              {profile.servingCapacity && (
+              {profile.servings && (
                 <div>
-                  <span className="font-medium">Capacity:</span> {profile.servingCapacity} people
+                  <span className="font-medium">Servings:</span> {profile.servings} people
                 </div>
               )}
               {profile.preferences.budgetPerServing && (

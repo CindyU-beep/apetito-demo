@@ -75,7 +75,7 @@ class BudgetAgent {
       }
       
       if (profile?.preferences.budgetPerServing) {
-        const perServing = context.servings || profile.servingCapacity || 100;
+        const perServing = context.servings || profile.servings || 100;
         const estimatedPerServing = total / perServing;
         if (estimatedPerServing <= profile.preferences.budgetPerServing) {
           message += `. Great news! These options stay within your $${profile.preferences.budgetPerServing.toFixed(2)}/serving budget`;

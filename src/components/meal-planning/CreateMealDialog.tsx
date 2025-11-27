@@ -42,7 +42,7 @@ export function CreateMealDialog({
     editingMeal?.meal || null
   );
   const [servings, setServings] = useState(
-    editingMeal?.servings.toString() || (profile?.servingCapacity?.toString() || '1')
+    editingMeal?.servings.toString() || (profile?.servings?.toString() || '1')
   );
   const [search, setSearch] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<Meal[]>([]);
@@ -63,10 +63,10 @@ export function CreateMealDialog({
         setSelectedMeal(editingMeal.meal);
         setServings(editingMeal.servings.toString());
       } else {
-        setServings(profile?.servingCapacity?.toString() || '1');
+        setServings(profile?.servings?.toString() || '1');
       }
     }
-  }, [open, editingMeal, profile?.servingCapacity]);
+  }, [open, editingMeal, profile?.servings]);
 
   useEffect(() => {
     if (selectedMeal && profile?.preferences.allergenExclusions) {
@@ -189,7 +189,7 @@ Return ONLY a JSON object:
 
   const resetForm = () => {
     setSelectedMeal(null);
-    setServings(profile?.servingCapacity?.toString() || '1');
+    setServings(profile?.servings?.toString() || '1');
     setSearch('');
     setAiSuggestions([]);
     setViewMode('browse');
@@ -404,16 +404,16 @@ Return ONLY a JSON object:
               )}
               <div className="space-y-2">
                 <Label htmlFor="servings">Number of Servings</Label>
-                {profile?.servingCapacity && !editingMeal && (
+                {profile?.servings && !editingMeal && (
                   <p className="text-xs text-muted-foreground">
-                    Default set to {profile.servingCapacity} based on {profile.name}'s capacity
+                    Default set to {profile.servings} based on {profile.name}'s servings
                   </p>
                 )}
                 <Input
                   id="servings"
                   type="number"
                   min="1"
-                  placeholder={profile?.servingCapacity?.toString() || '1'}
+                  placeholder={profile?.servings?.toString() || '1'}
                   value={servings}
                   onChange={(e) => setServings(e.target.value)}
                 />
