@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowsClockwise, ShoppingCart, Check, Warning } from '@phosphor-icons/react';
 import { OrderHistory, CartItem, OrganizationProfile } from '@/lib/types';
 import { toast } from 'sonner';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
 import { checkAllergenViolation } from '@/lib/allergenCheck';
 import {

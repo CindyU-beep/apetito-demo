@@ -11,11 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MagnifyingGlass, Sparkle, X, Microphone, Stop } from '@phosphor-icons/react';
+import { MagnifyingGlass, Sparkle, X, Microphone, MicrophoneSlash, SpeakerSlash, SpeakerHigh } from '@phosphor-icons/react';
 import { MOCK_MEALS } from '@/lib/mockData';
 import { MealCard } from './MealCard';
 import { CartItem, Meal } from '@/lib/types';
 import { toast } from 'sonner';
+import { llm } from '@/lib/llm';
+import { startContinuousRecognition, stopRecognition, speakText, stopSpeaking, cleanup } from '@/lib/voiceChat';
 
 type BrowseProductsProps = {
   onAddToCart: (item: CartItem) => void;
@@ -35,72 +37,218 @@ export function BrowseProducts({ onAddToCart }: BrowseProductsProps) {
   const [isSemanticSearchEnabled, setIsSemanticSearchEnabled] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [semanticResults, setSemanticResults] = useState<SemanticSearchResult | null>(null);
-  const [searchDebounceTimer, setSearchDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [searchDebounceTimer, setSearchDebounceTimer] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [isVoiceSupported, setIsVoiceSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const [interimText, setInterimText] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [recognizedText, setRecognizedText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isMicMuted, setIsMicMuted] = useState(false);
+  const stopRecognitionRef = useRef<(() => void) | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isStoppingRef = useRef(false);
 
   const categories = ['all', ...Array.from(new Set(MOCK_MEALS.map((m) => m.category)))];
 
+  // Cleanup voice recognition on unmount
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setIsVoiceSupported(true);
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-      
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setSearch(transcript);
-        toast.success('Voice recognized! Searching...');
-      };
-      
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        if (event.error === 'no-speech') {
-          toast.error('No speech detected. Try again.');
-        } else if (event.error === 'not-allowed') {
-          toast.error('Microphone access denied. Enable it in browser settings.');
-        } else {
-          toast.error('Voice recognition error. Try again.');
-        }
-      };
-      
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-      
-      recognitionRef.current = recognition;
-    }
+    return () => {
+      if (stopRecognitionRef.current) {
+        stopRecognitionRef.current();
+      }
+      cleanup();
+    };
   }, []);
 
-  const startVoiceSearch = () => {
-    if (!isVoiceSupported || !recognitionRef.current) {
-      toast.error('Voice search is not supported in this browser');
-      return;
-    }
-    
-    setIsListening(true);
-    setSearch('');
-    toast.info('Listening... Speak your search query');
-    
-    try {
-      recognitionRef.current.start();
-    } catch (error) {
-      console.error('Error starting voice recognition:', error);
+  const toggleVoiceRecognition = async () => {
+    if (isListening) {
+      if (stopRecognitionRef.current) {
+        stopRecognitionRef.current();
+        stopRecognitionRef.current = null;
+      }
       setIsListening(false);
-      toast.error('Failed to start voice recognition');
+      setInterimText('');
+      setIsProcessing(false);
+    } else {
+      // Check if mic is muted
+      if (isMicMuted) {
+        toast.error('Microphone is muted. Please unmute to use voice.');
+        return;
+      }
+      
+      try {
+        setIsListening(true);
+        setIsProcessing(true);
+        setRecognizedText(''); // Clear previous recognition
+        setIsSemanticSearchEnabled(true); // Enable semantic search for voice
+        
+        stopRecognitionRef.current = await startContinuousRecognition(
+          async (text) => {
+            setInterimText('');
+            setIsListening(false);
+            setRecognizedText(text); // Store what was heard
+            stopRecognitionRef.current = null;
+            
+            // Get AI meal suggestions based on voice input
+            await performSemanticSearchWithVoice(text);
+            setIsProcessing(false);
+          },
+          (interim) => {
+            setInterimText(interim);
+          },
+          (error: any) => {
+            console.error('Voice recognition error:', error);
+            setIsListening(false);
+            setInterimText('');
+            setIsProcessing(false);
+            stopRecognitionRef.current = null;
+          }
+        );
+      } catch (error) {
+        console.error('Failed to start voice recognition:', error);
+        setIsListening(false);
+        setIsProcessing(false);
+      }
     }
   };
 
-  const stopVoiceSearch = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+  const resetVoiceStates = () => {
+    // Guaranteed cleanup - always resets all voice-related states
     setIsListening(false);
+    setInterimText('');
+    setIsSpeaking(false);
+    setIsSearching(false);
+    setIsProcessing(false);
+    setRecognizedText('');
+    setIsMicMuted(false);
+  };
+
+  const stopVoiceAgent = () => {
+    // Set stopping flag to prevent race conditions
+    isStoppingRef.current = true;
+    
+    // Abort any ongoing async operations
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
+    // Stop listening if active
+    if (stopRecognitionRef.current) {
+      stopRecognitionRef.current();
+      stopRecognitionRef.current = null;
+    }
+    
+    // Stop speaking if active (kills audio immediately)
+    stopSpeaking();
+    
+    // Reset all states immediately
+    resetVoiceStates();
+    
+    // Reset stopping flag after microtask to allow cleanup to complete
+    queueMicrotask(() => {
+      isStoppingRef.current = false;
+    });
+  };
+
+  const toggleMicrophone = () => {
+    if (stopRecognitionRef.current && isListening) {
+      // Pause listening
+      stopRecognitionRef.current();
+      stopRecognitionRef.current = null;
+      setIsListening(false);
+      setInterimText('');
+    }
+    setIsMicMuted(!isMicMuted);
+  };
+
+  const performSemanticSearchWithVoice = async (voiceInput: string) => {
+    // Create new abort controller for this operation
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    
+    setIsSearching(true);
+    
+    try {
+      // Check if stopped or aborted
+      if (isStoppingRef.current || abortController.signal.aborted) {
+        return;
+      }
+      
+      const mealList = MOCK_MEALS.map((m, i) => 
+        `${i + 1}. ${m.name} - ${m.category} - €${(m.price || 0).toFixed(2)}/serving\n   Components: ${m.components.join(', ')}`
+      ).join('\n');
+      
+      const prompt = `Based on the user's request: "${voiceInput}"
+      
+Find meals from this menu that match their request:
+
+${mealList}
+
+Respond with a conversational explanation of the meals you found, then list the meal IDs.
+
+Format your response as:
+EXPLANATION: [Your conversational explanation here]
+MEAL_IDS: [id1, id2, id3, ...]`;
+
+      const response = await llm(prompt, 'gpt-4o');
+      
+      // Check if stopped or aborted after LLM call
+      if (isStoppingRef.current || abortController.signal.aborted) {
+        return;
+      }
+      
+      const explanationMatch = response.match(/EXPLANATION:\s*(.+?)(?=MEAL_IDS:|$)/s);
+      const explanation = explanationMatch ? explanationMatch[1].trim() : "Here are the meals I found for you.";
+      
+      const mealIdsMatch = response.match(/MEAL_IDS:\s*\[([^\]]+)\]/);
+      if (mealIdsMatch) {
+        const ids = mealIdsMatch[1].split(',').map(id => id.trim());
+        
+        // Only update results if not stopped
+        if (!isStoppingRef.current && !abortController.signal.aborted) {
+          setSemanticResults({
+            mealIds: ids,
+            explanation,
+            confidence: 0.9
+          });
+          setSearch(voiceInput);
+        }
+        
+        // Check if stopped or aborted before speaking
+        if (isStoppingRef.current || abortController.signal.aborted) {
+          return;
+        }
+        
+        // Speak the explanation
+        if (!isStoppingRef.current) {
+          setIsSpeaking(true);
+        }
+        
+        try {
+          await speakText(explanation);
+        } catch (error: any) {
+          // Ignore interruption errors (user stopped speaking)
+          if (!error?.message?.includes('interrupted')) {
+            console.error('Speech error:', error);
+          }
+        } finally {
+          // ALWAYS reset speaking state in finally block
+          if (!isStoppingRef.current) {
+            setIsSpeaking(false);
+          }
+        }
+      }
+    } catch (error: any) {
+      if (!abortController.signal.aborted && !isStoppingRef.current) {
+        console.error('Error in voice search:', error);
+      }
+    } finally {
+      // ALWAYS reset searching state in finally block
+      if (!isStoppingRef.current) {
+        setIsSearching(false);
+      }
+    }
   };
 
   useEffect(() => {
@@ -161,7 +309,7 @@ Return ONLY a valid JSON object with this exact structure:
 
 Include up to 15 most relevant meals, ordered by relevance. Confidence should be 0-1.`;
 
-      const response = await window.spark.llm(promptText, 'gpt-4o-mini', true);
+      const response = await llm(promptText, 'gpt-4o-mini', true);
       const result = JSON.parse(response) as SemanticSearchResult;
       
       setSemanticResults(result);
@@ -219,26 +367,36 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
             <div className="flex items-center justify-between">
               <Label className="text-base font-semibold">Search Meals</Label>
               <div className="flex items-center gap-2">
-                {isVoiceSupported && (
+                {(isListening || isSearching || isSpeaking) && (
                   <Button
-                    variant={isListening ? "destructive" : "outline"}
+                    variant="destructive"
                     size="sm"
-                    onClick={isListening ? stopVoiceSearch : startVoiceSearch}
-                    className="gap-2 shadow-sm"
+                    onClick={stopVoiceAgent}
+                    className="gap-2 shadow-sm animate-pulse"
                   >
-                    {isListening ? (
-                      <>
-                        <Stop className="w-4 h-4" weight="fill" />
-                        Stop
-                      </>
-                    ) : (
-                      <>
-                        <Microphone className="w-4 h-4" weight="fill" />
-                        Voice
-                      </>
-                    )}
+                    <X className="w-4 h-4" weight="bold" />
+                    Stop Voice Agent
                   </Button>
                 )}
+                <Button
+                  variant={isListening ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={toggleVoiceRecognition}
+                  disabled={isSearching}
+                  className="gap-2 shadow-sm"
+                >
+                  {isListening ? (
+                    <>
+                      <MicrophoneSlash className="w-4 h-4 animate-pulse" weight="fill" />
+                      {interimText && <span className="text-xs max-w-[100px] truncate">{interimText}</span>}
+                    </>
+                  ) : (
+                    <>
+                      <Microphone className="w-4 h-4" weight="fill" />
+                      Ask AI
+                    </>
+                  )}
+                </Button>
                 <Button
                   variant={isSemanticSearchEnabled ? 'default' : 'outline'}
                   size="sm"
@@ -273,14 +431,80 @@ Include up to 15 most relevant meals, ordered by relevance. Confidence should be
               )}
             </div>
 
-            {isListening && (
-              <div className="flex items-center gap-2 text-sm text-primary font-medium bg-primary/5 rounded-lg p-3 border border-primary/20">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                Listening... Speak your search query
+            {(isListening || interimText || recognizedText || isSearching || isSpeaking) && (
+              <div className="space-y-2">
+                {isListening && (
+                  <div className="flex items-center justify-between gap-2 text-sm font-medium bg-primary/10 rounded-lg p-3 border-2 border-primary/30 animate-pulse">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-primary">🎤 Listening...</span>
+                    </div>
+                  </div>
+                )}
+                
+                {interimText && (
+                  <div className="bg-muted/50 rounded-lg p-3 border border-border">
+                    <p className="text-sm text-muted-foreground italic">
+                      Hearing: "{interimText}"
+                    </p>
+                  </div>
+                )}
+
+                {recognizedText && !isSearching && !isSpeaking && (
+                  <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
+                    <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                      ✓ Heard: "{recognizedText}"
+                    </p>
+                  </div>
+                )}
+                
+                {isSearching && (
+                  <div className="flex items-center gap-2 text-sm text-primary font-medium bg-primary/5 rounded-lg p-3 border border-primary/20">
+                    <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+                    AI is analyzing your request...
+                  </div>
+                )}
+                
+                {isSpeaking && (
+                  <div className="flex items-center justify-between gap-2 text-sm font-medium bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border-2 border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      <span className="text-blue-700 dark:text-blue-400">🔊 AI is speaking...</span>
+                      {isMicMuted && (
+                        <Badge variant="secondary" className="text-xs">
+                          Mic Muted
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleMicrophone}
+                        className="h-7 px-2 text-xs hover:bg-blue-100 dark:hover:bg-blue-900"
+                        title={isMicMuted ? "Unmute microphone" : "Mute microphone"}
+                      >
+                        {isMicMuted ? (
+                          <MicrophoneSlash className="w-4 h-4" weight="fill" />
+                        ) : (
+                          <Microphone className="w-4 h-4" weight="fill" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={stopVoiceAgent}
+                        className="h-7 px-2 text-xs hover:bg-blue-100 dark:hover:bg-blue-900"
+                      >
+                        Stop
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {isSemanticSearchEnabled && (
+            {isSemanticSearchEnabled && !isListening && !isSearching && (
               <div className="bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 rounded-lg p-4 shadow-sm">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">

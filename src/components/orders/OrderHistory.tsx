@@ -1,4 +1,4 @@
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Package, TrendUp, ShoppingCart, CurrencyEur, ChartBar } from '@phosphor-icons/react';
@@ -6,7 +6,7 @@ import { OrderHistory as OrderHistoryType } from '@/lib/types';
 import { useMemo } from 'react';
 
 export function OrderHistory() {
-  const [orders] = useKV<OrderHistoryType[]>('orders', []);
+  const [orders] = useKV<OrderHistoryType[]>('order-history', []);
 
   const displayOrders = orders || [];
 

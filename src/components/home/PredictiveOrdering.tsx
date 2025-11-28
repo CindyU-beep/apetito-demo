@@ -7,7 +7,7 @@ import { OrderHistory, CartItem, Meal, OrganizationProfile } from '@/lib/types';
 import { MOCK_MEALS, MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
 import { SimpleMealCard } from './SimpleMealCard';
 import { toast } from 'sonner';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { checkAllergenViolation } from '@/lib/allergenCheck';
 import {
   AlertDialog,

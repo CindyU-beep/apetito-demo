@@ -1,17 +1,29 @@
 import { useState } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Sparkle, X } from '@phosphor-icons/react';
 import { ChatInterface } from './ChatInterface';
-import { Message, CartItem } from '@/lib/types';
+import { Message, CartItem, MealPlan } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type ChatbotPopupProps = {
   onAddToCart: (item: CartItem) => void;
+  mealPlans: MealPlan[];
+  setMealPlans: (updater: (current: MealPlan[]) => MealPlan[]) => void;
+  activePlanId: string | null;
+  setActivePlanId: (id: string | null) => void;
+  onSwitchToMealPlanning: () => void;
 };
 
-export function ChatbotPopup({ onAddToCart }: ChatbotPopupProps) {
+export function ChatbotPopup({ 
+  onAddToCart, 
+  mealPlans, 
+  setMealPlans, 
+  activePlanId, 
+  setActivePlanId,
+  onSwitchToMealPlanning 
+}: ChatbotPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useKV<Message[]>('chatbot-messages', []);
 
@@ -52,6 +64,11 @@ export function ChatbotPopup({ onAddToCart }: ChatbotPopupProps) {
                   messages={messages || []}
                   setMessages={setMessages}
                   onAddToCart={onAddToCart}
+                  mealPlans={mealPlans}
+                  setMealPlans={setMealPlans}
+                  activePlanId={activePlanId}
+                  setActivePlanId={setActivePlanId}
+                  onSwitchToMealPlanning={onSwitchToMealPlanning}
                 />
               </div>
             </Card>

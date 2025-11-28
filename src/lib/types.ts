@@ -15,7 +15,10 @@ export type FoodSafetyCertification =
   | 'HACCP'
   | 'EUOrganic'
   | 'Halal'
-  | 'Kosher';
+  | 'Kosher'
+  | 'MSC'
+  | 'BIO'
+  | 'Vegan';
 
 export type SustainabilityData = {
   co2Footprint?: number;

@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown, ArrowsClockwise } from '@phosphor-icons/react';
-import { Message, CartItem, AgentType, OrganizationProfile, OrderHistory } from '@/lib/types';
+import { Sparkle, PaperPlaneTilt, User, CurrencyDollar, ForkKnife, ShieldCheck, ChefHat, CaretDown, ArrowsClockwise, Calendar, Microphone, MicrophoneSlash } from '@phosphor-icons/react';
+import { Message, CartItem, AgentType, OrganizationProfile, OrderHistory, MealPlan, PlannedMeal } from '@/lib/types';
 import { AGENT_CONVERSATION_STARTERS } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MealCard } from '@/components/meal-planning/MealCard';
 import { coordinatorAgent } from '@/lib/agents';
 import { toast } from 'sonner';
+import { startContinuousRecognition, stopRecognition, speakText, stopSpeaking, cleanup } from '@/lib/voiceChat';
+import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +26,11 @@ type ChatInterfaceProps = {
   messages: Message[];
   setMessages: (updater: (current: Message[]) => Message[]) => void;
   onAddToCart: (item: CartItem) => void;
+  mealPlans: MealPlan[];
+  setMealPlans: (updater: (current: MealPlan[]) => MealPlan[]) => void;
+  activePlanId: string | null;
+  setActivePlanId: (id: string | null) => void;
+  onSwitchToMealPlanning: () => void;
 };
 
 const AGENT_CONFIG = {
@@ -54,12 +61,25 @@ const AGENT_CONFIG = {
   },
 };
 
-export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterfaceProps) {
+export function ChatInterface({ 
+  messages, 
+  setMessages, 
+  onAddToCart,
+  mealPlans,
+  setMealPlans,
+  activePlanId,
+  setActivePlanId,
+  onSwitchToMealPlanning
+}: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<AgentType | 'auto'>('auto');
+  const [isListening, setIsListening] = useState(false);
+  const [interimText, setInterimText] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const stopRecognitionRef = useRef<(() => void) | null>(null);
   
   const [profile] = useKV<OrganizationProfile>('organization-profile', {
     id: 'default',
@@ -75,6 +95,182 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
     updatedAt: Date.now(),
   });
   const [orderHistory] = useKV<OrderHistory[]>('order-history', []);
+
+  // Cleanup voice services on unmount
+  useEffect(() => {
+    return () => {
+      if (stopRecognitionRef.current) {
+        stopRecognitionRef.current();
+      }
+      cleanup();
+    };
+  }, []);
+
+  const toggleVoiceRecognition = () => {
+    if (isListening) {
+      // Stop listening
+      if (stopRecognitionRef.current) {
+        stopRecognitionRef.current();
+        stopRecognitionRef.current = null;
+      }
+      stopRecognition();
+      setIsListening(false);
+      setInterimText('');
+    } else {
+      // Start listening
+      try {
+        const stopFn = startContinuousRecognition(
+          (text) => {
+            // Interim results
+            setInterimText(text);
+          },
+          (text) => {
+            // Final result
+            if (text.trim()) {
+              setInput(prev => prev + (prev ? ' ' : '') + text);
+              setInterimText('');
+            }
+          },
+          (error) => {
+            console.error('Voice recognition error:', error);
+            setIsListening(false);
+            setInterimText('');
+          }
+        );
+        stopRecognitionRef.current = stopFn;
+        setIsListening(true);
+      } catch (error: any) {
+        console.error('Failed to start voice recognition:', error);
+      }
+    }
+  };
+
+  const handleSpeakResponse = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      await speakText(text);
+    } catch (error: any) {
+      // Ignore interruption errors (user stopped speaking)
+      if (!error?.message?.includes('interrupted')) {
+        console.error('Failed to speak response:', error);
+      }
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
+
+  const handleAddMealToCalendar = (meal: PlannedMeal['meal']) => {
+    // Check if there's an active meal plan
+    if (!activePlanId) {
+      // Create a new meal plan if none exists
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+      
+      const newPlan: MealPlan = {
+        id: `plan-${Date.now()}`,
+        name: `Meal Plan - Week of ${format(weekStart, 'MMM d')}`,
+        organizationName: profile?.name || "St. Mary's Regional Hospital",
+        servingSize: profile?.servings || 50,
+        startDate: format(weekStart, 'yyyy-MM-dd'),
+        endDate: format(weekEnd, 'yyyy-MM-dd'),
+        days: Array.from({ length: 7 }, (_, i) => ({
+          date: format(addDays(weekStart, i), 'yyyy-MM-dd'),
+          meals: [],
+        })),
+        createdAt: Date.now(),
+      };
+
+      setMealPlans((current = []) => [...current, newPlan]);
+      setActivePlanId(newPlan.id);
+      
+      // Add the meal to today or the next available day
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const targetDay = newPlan.days.find(d => d.date === today) || newPlan.days[0];
+      
+      const plannedMeal: PlannedMeal = {
+        id: `planned-${Date.now()}`,
+        meal,
+        mealType: 'lunch',
+        servings: 1,
+        notes: 'Added from AI Assistant',
+      };
+      
+      newPlan.days = newPlan.days.map((day) =>
+        day.date === targetDay.date
+          ? { ...day, meals: [...day.meals, plannedMeal] }
+          : day
+      );
+      
+      setMealPlans((current = []) => 
+        current.map(p => p.id === newPlan.id ? newPlan : p)
+      );
+      
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <div className="font-semibold">Added {meal.name} to meal plan!</div>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="mt-1 w-full"
+            onClick={onSwitchToMealPlanning}
+          >
+            <Calendar className="w-3 h-3 mr-1" />
+            View in Calendar
+          </Button>
+        </div>,
+        { duration: 5000 }
+      );
+      return;
+    }
+    
+    // Add to existing active plan
+    const activePlan = mealPlans.find(p => p.id === activePlanId);
+    if (!activePlan) return;
+    
+    // Add to today or the next available day in the plan
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const targetDay = activePlan.days.find(d => d.date === today) || activePlan.days[0];
+    
+    const plannedMeal: PlannedMeal = {
+      id: `planned-${Date.now()}`,
+      meal,
+      mealType: 'lunch',
+      servings: 1,
+      notes: 'Added from AI Assistant',
+    };
+    
+    setMealPlans((current = []) =>
+      current.map((plan) => {
+        if (plan.id === activePlanId) {
+          return {
+            ...plan,
+            days: plan.days.map((day) =>
+              day.date === targetDay.date
+                ? { ...day, meals: [...day.meals, plannedMeal] }
+                : day
+            ),
+          };
+        }
+        return plan;
+      })
+    );
+    
+    toast.success(
+      <div className="flex flex-col gap-1">
+        <div className="font-semibold">Added {meal.name} to meal plan!</div>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="mt-1 w-full"
+          onClick={onSwitchToMealPlanning}
+        >
+          <Calendar className="w-3 h-3 mr-1" />
+          View in Calendar
+        </Button>
+      </div>,
+      { duration: 5000 }
+    );
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -132,6 +328,12 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
 
     setMessages((current) => [...current, ...newMessages]);
     setIsLoading(false);
+
+    // Speak the first response if voice was used
+    if (isListening && newMessages.length > 0) {
+      const firstResponse = newMessages[0].content;
+      handleSpeakResponse(firstResponse);
+    }
 
     setTimeout(() => {
       inputRef.current?.focus();
@@ -412,9 +614,7 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
                         <MealCard
                           key={meal.id}
                           meal={meal}
-                          onAddToCart={() => {
-                            toast.success(`Added ${meal.name} to meal plan`);
-                          }}
+                          onAddToCart={() => handleAddMealToCalendar(meal)}
                         />
                       ))}
                     </div>
@@ -467,6 +667,35 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
       </div>
 
       <div className="p-3 border-t border-border bg-card flex-shrink-0">
+        {isListening && interimText && (
+          <div className="mb-2 bg-muted/50 rounded-lg p-2 border border-border">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold">Hearing: </span>
+              <span className="italic">"{interimText}"</span>
+            </p>
+          </div>
+        )}
+        
+        {isSpeaking && (
+          <div className="mb-2 flex items-center justify-between gap-2 bg-green-50 dark:bg-green-950/20 rounded-lg p-2 border border-green-200 dark:border-green-800">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-semibold text-green-700 dark:text-green-400">🔊 AI is speaking...</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                stopSpeaking();
+                setIsSpeaking(false);
+              }}
+              className="h-6 px-2 text-xs hover:bg-green-100 dark:hover:bg-green-900"
+            >
+              Stop
+            </Button>
+          </div>
+        )}
+        
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -474,15 +703,31 @@ export function ChatInterface({ messages, setMessages, onAddToCart }: ChatInterf
           }}
           className="flex gap-2"
         >
+          <Button
+            type="button"
+            onClick={toggleVoiceRecognition}
+            variant={isListening ? 'default' : 'outline'}
+            size="sm"
+            className={`h-10 px-3 ${isListening ? 'bg-destructive hover:bg-destructive/90 animate-pulse' : ''}`}
+            title={isListening ? 'Stop listening (click to interrupt)' : 'Start voice input'}
+          >
+            {isListening ? (
+              <MicrophoneSlash className="w-4 h-4" weight="fill" />
+            ) : (
+              <Microphone className="w-4 h-4" weight="fill" />
+            )}
+          </Button>
           <Input
             ref={inputRef}
             id="chat-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={
-              selectedAgent === 'auto'
-                ? 'Ask our specialized agents...'
-                : `Ask ${AGENT_CONFIG[selectedAgent]?.label || 'agent'}...`
+              isListening
+                ? '🎤 Listening... (click mic to stop)'
+                : selectedAgent === 'auto'
+                ? 'Ask our specialized agents... or click 🎤'
+                : `Ask ${AGENT_CONFIG[selectedAgent]?.label || 'agent'}... or click 🎤`
             }
             className="flex-1 text-sm h-10"
             disabled={isLoading}

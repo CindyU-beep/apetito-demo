@@ -31,7 +31,7 @@ export function Header({ cartCount, onCartClick, activeTab, onTabChange }: Heade
             <div className="flex items-center gap-3 flex-shrink-0">
               <img src={apetitoLogo} alt="Apetito" className="h-8 w-auto" />
               <div className="hidden md:block">
-                <h1 className="text-lg font-bold tracking-tight text-foreground">Meal Planner</h1>
+                <h1 className="text-lg font-bold tracking-tight text-foreground">AI Menu Planning</h1>
                 <p className="text-xs text-muted-foreground">Smart Institutional Ordering</p>
               </div>
             </div>

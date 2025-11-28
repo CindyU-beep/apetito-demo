@@ -6,7 +6,8 @@ import { Plus, Minus, PencilSimple, CaretRight, TrendUp, Warning, CheckCircle, S
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
+import { llm } from '@/lib/llm';
 
 type WeeklyCalendarProps = {
   plan: MealPlan;
@@ -48,7 +49,7 @@ export function WeeklyCalendar({
 
   const calculateDayTotal = (meals: PlannedMeal[]) => {
     return meals.reduce(
-      (sum, m) => sum + m.meal.price * m.servings * plan.servingSize,
+      (sum, m) => sum + m.meal.price * plan.servingSize,
       0
     );
   };
@@ -90,11 +91,13 @@ export function WeeklyCalendar({
         (acc, day) => {
           const dayTotals = day.meals.reduce(
             (dayAcc, meal) => ({
-              calories: dayAcc.calories + meal.meal.nutritionalInfo.calories * meal.servings * plan.servingSize,
-              protein: dayAcc.protein + meal.meal.nutritionalInfo.protein * meal.servings * plan.servingSize,
-              carbs: dayAcc.carbs + meal.meal.nutritionalInfo.carbs * meal.servings * plan.servingSize,
-              fat: dayAcc.fat + meal.meal.nutritionalInfo.fat * meal.servings * plan.servingSize,
-              cost: dayAcc.cost + meal.meal.price * meal.servings * plan.servingSize,
+              // Calculate averages across meals without multiplying by servings or servingSize
+              calories: dayAcc.calories + meal.meal.nutritionalInfo.calories,
+              protein: dayAcc.protein + meal.meal.nutritionalInfo.protein,
+              carbs: dayAcc.carbs + meal.meal.nutritionalInfo.carbs,
+              fat: dayAcc.fat + meal.meal.nutritionalInfo.fat,
+              // Cost per meal: price * servingSize (number of people)
+              cost: dayAcc.cost + (meal.meal.price * plan.servingSize),
             }),
             { calories: 0, protein: 0, carbs: 0, fat: 0, cost: 0 }
           );
@@ -163,17 +166,17 @@ Generate a brief, urgent warning message (2-3 sentences) that:
 Keep it professional but emphasize the safety risk.`;
 
           try {
-            const aiWarning = await window.spark.llm(promptText, 'gpt-4o-mini', false);
+            const aiWarning = await llm(promptText, 'gpt-4o', false);
             
             newSuggestions.push({
               type: 'warning',
-              title: '🚨 CRITICAL: Allergen Violations Detected',
+              title: 'Allergen Violations Detected',
               description: aiWarning,
             });
           } catch (error) {
             newSuggestions.push({
               type: 'warning',
-              title: '🚨 CRITICAL: Allergen Violations Detected',
+              title: 'Allergen Violations Detected',
               description: `Your meal plan contains ${violatingMeals.length} meal(s) with restricted allergens (${[...new Set(violatingMeals.flatMap(v => v.allergens))].join(', ')}). This violates ${profile.name}'s dietary requirements. Remove these meals immediately.`,
             });
           }
@@ -225,7 +228,8 @@ Keep it professional but emphasize the safety risk.`;
           day.meals.forEach(plannedMeal => {
             if (plannedMeal.meal.sustainability) {
               const s = plannedMeal.meal.sustainability;
-              if (s.co2Footprint) acc.totalCO2 += s.co2Footprint * plannedMeal.servings * plan.servingSize;
+              // Calculate average CO2 per meal without multiplying by servings or servingSize
+              if (s.co2Footprint) acc.totalCO2 += s.co2Footprint;
               if (s.regionalSourcing) acc.regionalCount++;
               if (s.organicCertified) acc.organicCount++;
               if (s.seasonalProduct) acc.seasonalCount++;
@@ -460,7 +464,7 @@ Keep it professional but emphasize the safety risk.`;
                 <p className="text-sm leading-relaxed">
                   Your {plan.days.filter(d => d.meals.length > 0).length}-day meal plan contains{' '}
                   <span className="font-semibold">{nutritionalBalance.variety} unique meals</span> with an average of{' '}
-                  <span className="font-semibold">{Math.round(nutritionalBalance.avgCalories)} calories</span> per day.
+                  <span className="font-semibold">{Math.round(nutritionalBalance.avgCalories)} calories per day</span>.
                   {nutritionalBalance.avgProtein >= 50 ? (
                     <span className="text-success font-medium"> Your plan is well-balanced!</span>
                   ) : (
@@ -472,7 +476,7 @@ Keep it professional but emphasize the safety risk.`;
               <div>
                 <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <TrendUp className="w-4 h-4 text-primary" />
-                  Nutritional Breakdown
+                  Average Daily Nutritional Values
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="text-center p-3 bg-background rounded-lg border">
@@ -545,6 +549,49 @@ Keep it professional but emphasize the safety risk.`;
                 ))}
               </div>
             </div>
+          )}
+
+          {nutritionalBalance && (
+            (() => {
+              // Determine if nutritionist consultation should be recommended
+              const hasLowProtein = nutritionalBalance.avgProtein < 50;
+              const hasHighCalories = nutritionalBalance.avgCalories > 800;
+              const hasLowCalories = nutritionalBalance.avgCalories < 300;
+              const hasLimitedVariety = nutritionalBalance.variety < 4 && plan.days.filter(d => d.meals.length > 0).length >= 5;
+              const hasHighCost = nutritionalBalance.costPerDay > 15;
+              
+              const shouldRecommendNutritionist = hasLowProtein || hasHighCalories || hasLowCalories || hasLimitedVariety;
+
+              if (shouldRecommendNutritionist) {
+                return (
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-success/10 to-success/5 border-2 border-success/30">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 text-success-foreground" weight="fill" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold mb-2">
+                          Need Expert Nutritional Guidance?
+                        </h4>
+                        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                          Based on your meal plan analysis, our certified nutritionists can help you optimize your menu for better balance, variety, and nutritional value tailored to your organization's specific needs.
+                        </p>
+                        <a
+                          href="https://www.apetito.de/bester-service/ernaehrungsberatung"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-success hover:bg-success/90 text-success-foreground text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <span>Consult Apetito Nutritionist</span>
+                          <CaretRight className="w-4 h-4" weight="bold" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()
           )}
         </CardContent>
       </Card>

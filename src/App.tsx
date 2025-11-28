@@ -1,4 +1,4 @@
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { HomePage } from '@/components/home/HomePage';
@@ -8,7 +8,7 @@ import { CartPanel } from '@/components/cart/CartPanel';
 import { Header } from '@/components/layout/Header';
 import { MealPlanner } from '@/components/meal-planning/MealPlanner';
 import { ChatbotPopup } from '@/components/chat/ChatbotPopup';
-import { CartItem, OrganizationProfile, OrderHistory as OrderHistoryType } from '@/lib/types';
+import { CartItem, OrganizationProfile, OrderHistory as OrderHistoryType, MealPlan } from '@/lib/types';
 import { Toaster } from '@/components/ui/sonner';
 import { MOCK_ORGANIZATION_PROFILE, MOCK_ORDER_HISTORY } from '@/lib/mockData';
 
@@ -16,6 +16,8 @@ function App() {
   const [cart, setCart] = useKV<CartItem[]>('cart', []);
   const [profile, setProfile] = useKV<OrganizationProfile>('organization-profile', MOCK_ORGANIZATION_PROFILE);
   const [orderHistory, setOrderHistory] = useKV<OrderHistoryType[]>('order-history', MOCK_ORDER_HISTORY);
+  const [mealPlans, setMealPlans] = useKV<MealPlan[]>('meal-plans', []);
+  const [activePlanId, setActivePlanId] = useKV<string | null>('active-meal-plan', null);
   const [activeTab, setActiveTab] = useState('home');
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -102,7 +104,14 @@ function App() {
         onClearCart={clearCart}
       />
 
-      <ChatbotPopup onAddToCart={addToCart} />
+      <ChatbotPopup 
+        onAddToCart={addToCart}
+        mealPlans={mealPlans || []}
+        setMealPlans={setMealPlans}
+        activePlanId={activePlanId}
+        setActivePlanId={setActivePlanId}
+        onSwitchToMealPlanning={() => setActiveTab('meal-planning')}
+      />
 
       <Toaster />
     </div>

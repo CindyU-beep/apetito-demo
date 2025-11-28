@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
+import { llm } from '@/lib/llm';
 
 type MealPlanningAIProps = {
   plan: MealPlan;
@@ -588,7 +589,7 @@ Return ONLY a JSON object with this exact structure:
   ]
 }`;
 
-      const response = await window.spark.llm(promptText, 'gpt-4o', true);
+      const response = await llm(promptText, 'gpt-4o', true);
       const aiPlan = JSON.parse(response);
 
       const daySuggestions = plan.days.map((day, index) => {
@@ -710,7 +711,7 @@ Based on the user's request and organization profile, generate appropriate meal 
 
 If the request is about specific days, only modify those days. If it's about the whole week, modify all days.`;
 
-      const response = await window.spark.llm(promptText, 'gpt-4o', true);
+      const response = await llm(promptText, 'gpt-4o', true);
       const aiResponse = JSON.parse(response);
 
       const daySuggestions = plan.days.map((day, index) => {

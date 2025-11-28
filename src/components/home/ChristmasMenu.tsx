@@ -6,7 +6,7 @@ import { Snowflake, Gift, Star, Warning, ShoppingCart } from '@phosphor-icons/re
 import { CartItem, Meal, OrganizationProfile } from '@/lib/types';
 import { MOCK_MEALS, MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
 import { toast } from 'sonner';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { checkAllergenViolation } from '@/lib/allergenCheck';
 import {
   AlertDialog,
@@ -89,7 +89,7 @@ export function ChristmasMenu({ onAddToCart }: ChristmasMenuProps) {
   };
 
   const christmasMeals = MOCK_MEALS.filter(m => 
-    ['meal-15', 'meal-16', 'meal-12', 'meal-20', 'meal-9', 'meal-7'].includes(m.id)
+    ['meal-15', 'meal-20', 'meal-9', 'meal-5'].includes(m.id)
   );
 
   return (
@@ -98,16 +98,12 @@ export function ChristmasMenu({ onAddToCart }: ChristmasMenuProps) {
         <div>
           <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <Snowflake className="w-5 h-5 text-red-600" weight="fill" />
-            Christmas Menu 2024
+            Christmas Menu 2025
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Festive traditional classics
+            Bring Festive classics into your workplace this holiday season!
           </p>
         </div>
-        <Badge className="bg-gradient-to-r from-red-600 to-green-600 text-white gap-1 px-2.5 py-0.5 text-xs">
-          <Gift className="w-3 h-3" weight="fill" />
-          Limited
-        </Badge>
       </div>
 
       <Card className="border border-border overflow-hidden">

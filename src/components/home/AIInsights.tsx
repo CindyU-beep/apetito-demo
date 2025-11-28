@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChartLine, TrendUp, Clock, ShoppingCart } from '@phosphor-icons/react';
+import { CurrencyEur, ChartBar, ShoppingCart, TrendUp } from '@phosphor-icons/react';
 import { OrderHistory } from '@/lib/types';
 
 type AIInsightsProps = {
@@ -12,47 +12,48 @@ export function AIInsights({ orderHistory }: AIInsightsProps) {
     return null;
   }
 
-  const totalOrders = orderHistory.length;
-  const completedOrders = orderHistory.filter(o => o.status === 'completed').length;
-  const totalSpent = orderHistory.reduce((sum, order) => sum + order.total, 0);
-  const avgOrderValue = totalSpent / totalOrders;
+  const completedOrders = orderHistory.filter(o => o.status === 'completed');
+  const totalSpent = completedOrders.reduce((sum, order) => sum + order.total, 0);
+  const avgOrderValue = completedOrders.length > 0 ? totalSpent / completedOrders.length : 0;
 
-  const lastOrder = orderHistory.length > 0 
-    ? [...orderHistory].sort((a, b) => b.date - a.date)[0]
-    : null;
+  const totalItems = completedOrders.reduce(
+    (sum, order) => sum + order.items.reduce((s, item) => s + item.quantity, 0), 
+    0
+  );
 
-  const daysSinceLastOrder = lastOrder 
-    ? Math.floor((Date.now() - lastOrder.date) / (1000 * 60 * 60 * 24))
-    : 0;
+  const last30Days = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recentOrders = completedOrders.filter(o => o.date >= last30Days);
+  const recentSpending = recentOrders.reduce((sum, order) => sum + order.total, 0);
 
   const insights = [
     {
-      icon: ShoppingCart,
-      label: 'Total Orders',
-      value: totalOrders.toString(),
+      icon: CurrencyEur,
+      label: 'Total Spent',
+      value: `€${totalSpent.toFixed(2)}`,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
     {
-      icon: ChartLine,
+      icon: ChartBar,
       label: 'Avg Order Value',
       value: `€${avgOrderValue.toFixed(2)}`,
       color: 'text-accent',
       bgColor: 'bg-accent/10',
     },
     {
-      icon: TrendUp,
-      label: 'Completed',
-      value: `${completedOrders}/${totalOrders}`,
+      icon: ShoppingCart,
+      label: 'Total Items',
+      value: totalItems.toString(),
       color: 'text-success',
       bgColor: 'bg-success/10',
     },
     {
-      icon: Clock,
-      label: 'Last Order',
-      value: daysSinceLastOrder === 0 ? 'Today' : `${daysSinceLastOrder}d ago`,
-      color: 'text-muted-foreground',
-      bgColor: 'bg-muted',
+      icon: TrendUp,
+      label: 'Last 30 Days',
+      value: `€${recentSpending.toFixed(2)}`,
+      subtitle: `${recentOrders.length} order${recentOrders.length !== 1 ? 's' : ''}`,
+      color: 'text-warning',
+      bgColor: 'bg-warning/10',
     },
   ];
 
@@ -73,6 +74,11 @@ export function AIInsights({ orderHistory }: AIInsightsProps) {
                 <p className="text-2xl font-bold text-foreground mt-1">
                   {insight.value}
                 </p>
+                {insight.subtitle && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {insight.subtitle}
+                  </p>
+                )}
               </div>
             </div>
           </Card>

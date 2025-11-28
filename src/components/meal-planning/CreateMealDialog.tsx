@@ -20,7 +20,8 @@ import { MagnifyingGlass, Check, Sparkle, Lightning, Warning } from '@phosphor-i
 import { toast } from 'sonner';
 import { MOCK_MEALS } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
+import { llm } from '@/lib/llm';
 
 type CreateMealDialogProps = {
   open: boolean;
@@ -93,70 +94,33 @@ export function CreateMealDialog({
         );
       }
       
-      const mealsData = JSON.stringify(availableMeals.map(m => ({
-        id: m.id,
-        name: m.name,
-        category: m.category,
-        calories: m.nutritionalInfo.calories,
-        protein: m.nutritionalInfo.protein,
-        price: m.price,
-        dietaryTags: m.dietaryTags,
-        allergens: m.allergens
-      })));
-
-      let profileContext = '';
-      if (profile) {
-        profileContext = `\n\nORGANIZATION CONTEXT:
-- Organization: ${profile.name}
-- Type: ${profile.type}
-- Excluded Allergens (meals with these have been pre-filtered): ${profile.preferences.allergenExclusions.join(', ') || 'None'}
-- Dietary Preferences: ${profile.preferences.dietaryRestrictions.join(', ') || 'None'}`;
-      }
-
-      const promptText = `You are a nutritionist AI assistant. Suggest 3-5 best meals for ${dayOfWeek} that are SAFE and appropriate.${profileContext}
-
-Available meals (pre-filtered for allergen safety):
-${mealsData}
-
-Consider:
-- Day of week (${dayOfWeek}) - lighter meals mid-week, heartier on weekends
-- Nutritional balance (aim for 500-700 kcal, 25-35g protein per meal)
-- Variety in categories
-- Popular combinations
-${profile ? `- Organization type: ${profile.type} (consider appropriate meal types for this setting)` : ''}
-${profile?.preferences.dietaryRestrictions.length ? `- Prefer meals tagged as: ${profile.preferences.dietaryRestrictions.join(', ')}` : ''}
-
-Return ONLY a JSON object:
-{
-  "suggestions": [
-    {
-      "mealId": "meal_id",
-      "reason": "Brief reason why this is good for ${dayOfWeek}${profile ? ` at ${profile.name}` : ''}"
-    }
-  ]
-}`;
-
-      const response = await window.spark.llm(promptText, 'gpt-4o', true);
-      const result = JSON.parse(response);
+      const mealList = availableMeals.map((m, i) => 
+        `${i + 1}. ${m.name} - ${m.category} - €${(m.price || 0).toFixed(2)}/serving\n   Components: ${m.components.join(', ')}`
+      ).join('\n');
       
-      const suggestedMeals = result.suggestions
-        .map((s: { mealId: string; reason: string }) => {
-          const meal = availableMeals.find(m => m.id === s.mealId);
-          return meal ? { ...meal, aiReason: s.reason } : null;
-        })
-        .filter(Boolean) as (Meal & { aiReason: string })[];
+      const prompt = `For ${dayOfWeek}, suggest 3 meals from this menu that would be good choices:
 
-      setAiSuggestions(suggestedMeals);
+${mealList}
+
+Respond with exactly 3 meal IDs (just the numbers) that would be good for this day.
+
+Format your response as:
+MEAL_IDS: [id1, id2, id3]`;
+
+      const response = await llm(prompt, 'gpt-4o');
       
-      if (suggestedMeals.length === 0) {
-        toast.info('No AI suggestions available, browse all meals');
-      } else if (profile?.preferences.allergenExclusions && profile.preferences.allergenExclusions.length > 0) {
-        toast.success(`AI suggestions filtered to exclude ${profile.preferences.allergenExclusions.join(', ')} for safety`);
+      const mealIdsMatch = response.match(/MEAL_IDS:\s*\[([^\]]+)\]/);
+      if (mealIdsMatch) {
+        const ids = mealIdsMatch[1].split(',').map(id => parseInt(id.trim()));
+        const suggested = ids
+          .map(id => availableMeals[id - 1])
+          .filter(Boolean);
+        
+        setAiSuggestions(suggested);
       }
     } catch (error) {
       console.error('Error getting AI suggestions:', error);
-      toast.error('Failed to get AI suggestions');
-      setViewMode('browse');
+      toast.error('Could not get AI suggestions');
     } finally {
       setIsLoadingSuggestions(false);
     }
@@ -278,7 +242,7 @@ Return ONLY a JSON object:
         if (!open) resetForm();
       }}
     >
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[95vh] h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {editingMeal ? 'Edit Meal' : 'Add Meal'} - {format(selectedDate, 'EEEE, MMM d')}
@@ -332,7 +296,7 @@ Return ONLY a JSON object:
                 />
               </div>
 
-              <ScrollArea className="h-[400px] pr-4">
+              <ScrollArea className="h-[600px] pr-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {filteredMeals.map(renderMealCard)}
                 </div>
@@ -341,7 +305,7 @@ Return ONLY a JSON object:
           )}
 
           {viewMode === 'ai' && !isLoadingSuggestions && (
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[600px] pr-4">
               {aiSuggestions.length > 0 ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">

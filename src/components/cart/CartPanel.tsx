@@ -11,7 +11,7 @@ import { CartItem, AllergenType, OrderHistory, OrganizationProfile } from '@/lib
 import { ALLERGEN_LABELS } from '@/lib/mockData';
 import { TrashSimple, Warning, ShieldCheck, ShoppingCart, ForkKnife, Sparkle } from '@phosphor-icons/react';
 import { toast } from 'sonner';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 
 type CartPanelProps = {
   cart: CartItem[];

@@ -6,7 +6,7 @@ import { Fire, Star, Heart, CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { CartItem, Meal, OrganizationProfile } from '@/lib/types';
 import { MOCK_MEALS, MOCK_ORGANIZATION_PROFILE } from '@/lib/mockData';
 import { toast } from 'sonner';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/hooks/use-kv';
 import { checkAllergenViolation } from '@/lib/allergenCheck';
 import {
   AlertDialog,
